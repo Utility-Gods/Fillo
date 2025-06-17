@@ -1,0 +1,354 @@
+.fillo-field-container {
+  position: relative;
+  display: inline-block;
+}
+
+.fillo-field-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+}
+
+.fillo-field-button:hover {
+  border-color: #007bff;
+  background: #f0f8ff;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+.fillo-field-button.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.fillo-field-button.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: fillo-spin 1s linear infinite;
+}
+
+@keyframes fillo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fillo-suggestion-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: fillo-slide-in 0.2s ease forwards;
+}
+
+@keyframes fillo-slide-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fillo-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fillo-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.fillo-panel-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.fillo-panel-close:hover {
+  background: #f0f0f0;
+}
+
+.fillo-panel-content {
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.fillo-suggestion {
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.fillo-suggestion:hover {
+  border-color: #007bff;
+  background: #f8fbff;
+}
+
+.fillo-suggestion-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.fillo-suggestion-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.fillo-creativity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fillo-creativity-badge.low {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.fillo-creativity-badge.medium {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.fillo-creativity-badge.high {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.fillo-creativity-badge.very-high {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.fillo-provider-badge {
+  font-size: 11px;
+  color: #999;
+}
+
+.fillo-suggestion.cached::after {
+  content: '💾';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.fillo-regenerate-section {
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fillo-regenerate-button {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #007bff;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fillo-regenerate-button:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.fillo-regenerate-button.secondary {
+  background: white;
+  color: #007bff;
+}
+
+.fillo-regenerate-button.secondary:hover {
+  background: #f0f8ff;
+}
+
+.fillo-regenerate-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fillo-error-message {
+  padding: 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  color: #c00;
+  font-size: 14px;
+  text-align: center;
+}
+
+.fillo-loading-message {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.fillo-loading-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: fillo-spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+.fillo-no-provider {
+  padding: 16px;
+  text-align: center;
+}
+
+.fillo-no-provider-message {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.fillo-settings-link {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.fillo-settings-link:hover {
+  background: #0056b3;
+}
+
+/* Animations */
+.fillo-fade-in {
+  animation: fillo-fade-in 0.2s ease;
+}
+
+@keyframes fillo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* For textarea and select elements */
+textarea ~ .fillo-field-button,
+select ~ .fillo-field-button {
+  top: 12px;
+  transform: none;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .fillo-field-button {
+    background: #2a2a2a;
+    border-color: #444;
+    color: white;
+  }
+
+  .fillo-field-button:hover {
+    background: #1a1a1a;
+    border-color: #0066cc;
+  }
+
+  .fillo-suggestion-panel {
+    background: #1a1a1a;
+    border-color: #444;
+    color: white;
+  }
+
+  .fillo-panel-header {
+    border-color: #444;
+  }
+
+  .fillo-panel-title,
+  .fillo-suggestion-text {
+    color: white;
+  }
+
+  .fillo-suggestion {
+    border-color: #444;
+  }
+
+  .fillo-suggestion:hover {
+    background: #2a2a2a;
+    border-color: #0066cc;
+  }
+
+  .fillo-panel-close:hover {
+    background: #333;
+  }
+
+  .fillo-error-message {
+    background: #4a0000;
+    border-color: #800000;
+  }
+}
