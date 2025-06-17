@@ -140,10 +140,8 @@ export class OverlayManager {
       }
     });
 
-    // Insert button after the element
-    if (element.parentNode) {
-      element.parentNode.insertBefore(button, element.nextSibling);
-    }
+    // Append button to document body for proper positioning
+    document.body.appendChild(button);
 
     return button;
   }
@@ -200,11 +198,8 @@ export class OverlayManager {
     // Add event listeners
     this.attachPanelEventListeners(panel, element, fieldInfo);
 
-    // Position and add to DOM
-    const button = this.activeButtons.get(element);
-    if (button && button.parentNode) {
-      button.parentNode.insertBefore(panel, button.nextSibling);
-    }
+    // Append panel to document body for proper positioning
+    document.body.appendChild(panel);
 
     this.activePanels.set(element, panel);
 

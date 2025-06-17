@@ -1,13 +1,5 @@
-.fillo-field-container {
-  position: relative;
-  display: inline-block;
-}
-
 .fillo-field-button {
   position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 28px;
   height: 28px;
   border: 1px solid #e0e0e0;
@@ -52,8 +44,6 @@
 
 .fillo-suggestion-panel {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   width: 320px;
   max-width: 90vw;
   background: white;
