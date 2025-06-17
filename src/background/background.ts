@@ -15,6 +15,10 @@ chrome.runtime.onStartup.addListener(() => {
 
 async function initializeExtension() {
   try {
+    console.log('Fillo: Initializing extension...');
+    console.log('Fillo: Environment check - typeof window:', typeof window);
+    console.log('Fillo: Environment check - typeof document:', typeof document);
+    
     // Initialize storage
     const storage = StorageManager.getInstance();
     const settings = await storage.getSettings();
@@ -31,6 +35,7 @@ async function initializeExtension() {
     console.log('Fillo: Content generator initialized');
   } catch (error) {
     console.error('Fillo: Failed to initialize', error);
+    console.error('Fillo: Initialization error stack:', error instanceof Error ? error.stack : 'No stack trace');
   }
 }
 
@@ -93,13 +98,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleGenerateContent(request: any, sendResponse: Function) {
   try {
+    console.log('Background: Starting content generation for field:', request.fieldInfo);
+    console.log('Background: Environment check - typeof window:', typeof window);
+    
+    // Test if the issue occurs during class instantiation
+    console.log('Background: About to get ContentGenerator instance...');
     const contentGenerator = ContentGenerator.getInstance();
+    console.log('Background: ContentGenerator instance obtained');
+    
+    // Test if the issue occurs during initialization
+    console.log('Background: About to initialize ContentGenerator...');
+    await contentGenerator.initialize();
+    console.log('Background: ContentGenerator initialized');
+    
+    // Test if the issue occurs during content generation
+    console.log('Background: About to generate content...');
     const response = await contentGenerator.generateForField(
       request.fieldInfo,
       request.options
     );
+    
+    console.log('Background: Content generated successfully:', response);
     sendResponse({ success: true, response });
   } catch (error) {
+    console.error('Background: Content generation failed at step:', error);
+    console.error('Background: Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
     sendResponse({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to generate content' 

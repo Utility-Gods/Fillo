@@ -1,5 +1,4 @@
 import { FieldInfo, ProviderResponse } from '../types';
-import { getTemperatureLabel } from '../settings/creativity-presets';
 
 export interface OverlayOptions {
   showIcons: boolean;
@@ -302,7 +301,7 @@ export class OverlayManager {
 
     const suggestionItems = suggestions.map((suggestion, index) => {
       const creativityClass = this.getCreativityClass(suggestion.creativityLevel);
-      const creativityLabel = getTemperatureLabel(suggestion.creativityLevel);
+      const creativityLabel = this.getTemperatureLabel(suggestion.creativityLevel);
       
       return `
         <div class="fillo-suggestion ${suggestion.cached ? 'cached' : ''}" data-index="${index}">
@@ -492,6 +491,15 @@ export class OverlayManager {
       panel.remove();
     });
     this.activePanels.clear();
+  }
+
+  private getTemperatureLabel(temperature: number): string {
+    if (temperature <= 0.3) return 'Very Predictable';
+    if (temperature <= 0.5) return 'Predictable';
+    if (temperature <= 0.8) return 'Balanced';
+    if (temperature <= 1.2) return 'Creative';
+    if (temperature <= 1.5) return 'Very Creative';
+    return 'Experimental';
   }
 
   private getCreativityClass(level: number): string {
