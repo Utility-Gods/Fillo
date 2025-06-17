@@ -28,26 +28,6 @@
     "default_popup": "src/popup/popup.html"
   },
   "options_page": "src/options/options.html",
-  "commands": {
-    "generate-focused": {
-      "suggested_key": {
-        "default": "Alt+G"
-      },
-      "description": "Generate content for focused field"
-    },
-    "fill-all": {
-      "suggested_key": {
-        "default": "Alt+F"
-      },
-      "description": "Fill all detected form fields"
-    },
-    "toggle-overlay": {
-      "suggested_key": {
-        "default": "Alt+T"
-      },
-      "description": "Toggle form field overlays"
-    }
-  },
   "web_accessible_resources": [
     {
       "resources": ["src/ui/overlay.css"],

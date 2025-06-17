@@ -87,27 +87,6 @@ function isLocalhost(url: string): boolean {
   }
 }
 
-// Handle keyboard commands
-chrome.commands.onCommand.addListener(async (command, tab) => {
-  console.log('Background: Keyboard command received:', command, tab);
-  
-  if (!tab?.id || !tab.url || !isLocalhost(tab.url)) {
-    console.log('Background: Ignoring command on non-localhost tab');
-    return;
-  }
-
-  try {
-    // Send command to content script
-    await chrome.tabs.sendMessage(tab.id, {
-      action: 'keyboard-command',
-      command: command
-    });
-    console.log('Background: Command sent to content script');
-  } catch (error) {
-    console.error('Background: Failed to send command to content script:', error);
-  }
-});
-
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'checkHostname') {
