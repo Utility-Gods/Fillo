@@ -1,3 +1,31 @@
+// Polyfill browser APIs for service worker context
+if (typeof window === 'undefined') {
+  (globalThis as any).window = {
+    dispatchEvent: () => true,
+    addEventListener: () => {},
+    removeEventListener: () => {}
+  };
+}
+if (typeof document === 'undefined') {
+  (globalThis as any).document = {
+    createElement: () => ({
+      rel: '',
+      as: '',
+      crossOrigin: '',
+      href: '',
+      setAttribute: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {}
+    }),
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    getElementsByTagName: () => [],
+    head: { 
+      appendChild: () => {} 
+    }
+  };
+}
+
 import { StorageManager } from '../storage/storage';
 import { ProviderManager } from '../llm/provider-manager';
 import { ContentGenerator } from '../llm/content-generator';

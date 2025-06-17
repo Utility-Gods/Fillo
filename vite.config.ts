@@ -14,7 +14,9 @@ export default defineConfig({
         popup: 'src/popup/popup.html',
         options: 'src/options/options.html'
       }
-    }
+    },
+    // Disable module preloading for service workers
+    modulePreload: false
   },
   server: {
     port: 5173,
