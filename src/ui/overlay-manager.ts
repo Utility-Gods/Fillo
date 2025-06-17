@@ -24,17 +24,17 @@ export class OverlayManager {
   }
 
   async initialize(): Promise<void> {
-    // Check if any provider is configured
-    const response = await this.sendMessage({ action: 'getSettings' });
-    if (response.success && response.settings) {
-      // Check if any provider has an API key configured
-      for (const providerName of Object.keys(response.settings.providers)) {
-        const provider = response.settings.providers[providerName];
-        if (provider.apiKey && provider.apiKey.trim() !== '') {
-          this.hasProvider = true;
-          break;
-        }
-      }
+    // Check if any provider is configured by checking encrypted storage
+    try {
+      const encryptedKeysResult = await chrome.storage.local.get(['fillo_encrypted_keys']);
+      const encryptedKeys = encryptedKeysResult.fillo_encrypted_keys || {};
+      
+      // If we have any encrypted API keys, we have a provider configured
+      this.hasProvider = Object.keys(encryptedKeys).length > 0;
+      console.log('OverlayManager: Found encrypted keys for providers:', Object.keys(encryptedKeys));
+    } catch (error) {
+      console.error('OverlayManager: Failed to check encrypted keys:', error);
+      this.hasProvider = false;
     }
     
     this.injectStyles();

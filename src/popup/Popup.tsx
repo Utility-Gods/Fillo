@@ -38,15 +38,27 @@ const Popup: Component = () => {
 
       // Get settings and provider info
       const response = await chrome.runtime.sendMessage({ action: 'getSettings' });
+      console.log('Popup: Settings response:', response);
+      
       if (response.success && response.settings) {
         const settings = response.settings;
+        console.log('Popup: Settings object:', settings);
         
-        // Find the configured provider
-        for (const [providerName, config] of Object.entries(settings.providers)) {
-          if (config.apiKey && config.apiKey.trim() !== '') {
+        // Check encrypted API keys storage to find configured providers
+        const encryptedKeysResult = await chrome.storage.local.get(['fillo_encrypted_keys']);
+        const encryptedKeys = encryptedKeysResult.fillo_encrypted_keys || {};
+        console.log('Popup: Encrypted keys found:', Object.keys(encryptedKeys));
+        
+        // Find the configured provider by checking encrypted storage
+        for (const [providerName, config] of Object.entries(settings.providers || {})) {
+          console.log(`Popup: Checking provider ${providerName}:`, config);
+          console.log(`Popup: Has encrypted key: ${!!encryptedKeys[providerName]}`);
+          
+          if (encryptedKeys[providerName]) {
+            console.log(`Popup: Found configured provider: ${providerName}`);
             setProvider({
               name: providerName.charAt(0).toUpperCase() + providerName.slice(1),
-              model: config.model || 'Default',
+              model: config.defaultModel || config.model || 'Default',
               connected: true
             });
             break;
@@ -55,6 +67,8 @@ const Popup: Component = () => {
 
         // Set creativity level
         setCreativityLevel(settings.creativity?.level || 0.7);
+      } else {
+        console.log('Popup: Failed to get settings:', response);
       }
 
       // Get cache stats
