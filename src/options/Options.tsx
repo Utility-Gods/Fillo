@@ -1,7 +1,17 @@
-import { Component, createSignal } from 'solid-js';
+import { Component, createSignal, createEffect, onMount } from 'solid-js';
+import { Settings } from '../types';
+import { StorageManager } from '../storage/storage';
+import ProviderSettings from './components/ProviderSettings';
+import CreativitySettings from './components/CreativitySettings';
+import CacheSettings from './components/CacheSettings';
+import GeneralSettings from './components/GeneralSettings';
 
 const Options: Component = () => {
   const [activeTab, setActiveTab] = createSignal('providers');
+  const [settings, setSettings] = createSignal<Settings | null>(null);
+  const [loading, setLoading] = createSignal(true);
+
+  const storage = StorageManager.getInstance();
 
   const tabs = [
     { id: 'providers', name: 'Providers', icon: '🔑' },
@@ -9,6 +19,26 @@ const Options: Component = () => {
     { id: 'cache', name: 'Cache', icon: '💾' },
     { id: 'general', name: 'General', icon: '⚙️' }
   ];
+
+  onMount(async () => {
+    try {
+      const userSettings = await storage.getSettings();
+      setSettings(userSettings);
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  const handleSettingsChange = async (newSettings: Settings) => {
+    try {
+      await storage.saveSettings(newSettings);
+      setSettings(newSettings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  };
 
   return (
     <div class="options-container">
@@ -31,43 +61,44 @@ const Options: Component = () => {
         </nav>
 
         <main class="tab-content">
-          {activeTab() === 'providers' && (
-            <div class="panel">
-              <h2>LLM Providers</h2>
-              <p>Configure your API keys and models for content generation.</p>
-              <div class="coming-soon">
-                🚧 Provider settings coming soon...
-              </div>
+          {loading() ? (
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              <p>Loading settings...</p>
             </div>
-          )}
+          ) : settings() ? (
+            <>
+              {activeTab() === 'providers' && (
+                <ProviderSettings 
+                  settings={settings()!} 
+                  onSettingsChange={handleSettingsChange}
+                />
+              )}
 
-          {activeTab() === 'creativity' && (
-            <div class="panel">
-              <h2>Creativity Settings</h2>
-              <p>Control how creative and varied the generated content should be.</p>
-              <div class="coming-soon">
-                🎨 Creativity controls coming soon...
-              </div>
-            </div>
-          )}
+              {activeTab() === 'creativity' && (
+                <CreativitySettings 
+                  settings={settings()!} 
+                  onSettingsChange={handleSettingsChange}
+                />
+              )}
 
-          {activeTab() === 'cache' && (
-            <div class="panel">
-              <h2>Cache Management</h2>
-              <p>Manage cached responses to reduce API calls.</p>
-              <div class="coming-soon">
-                💾 Cache settings coming soon...
-              </div>
-            </div>
-          )}
+              {activeTab() === 'cache' && (
+                <CacheSettings 
+                  settings={settings()!} 
+                  onSettingsChange={handleSettingsChange}
+                />
+              )}
 
-          {activeTab() === 'general' && (
-            <div class="panel">
-              <h2>General Settings</h2>
-              <p>UI preferences and general configuration.</p>
-              <div class="coming-soon">
-                ⚙️ General settings coming soon...
-              </div>
+              {activeTab() === 'general' && (
+                <GeneralSettings 
+                  settings={settings()!} 
+                  onSettingsChange={handleSettingsChange}
+                />
+              )}
+            </>
+          ) : (
+            <div class="error">
+              <p>Failed to load settings. Please refresh the page.</p>
             </div>
           )}
         </main>
