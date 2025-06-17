@@ -74,15 +74,97 @@ async function handleStorageChanged(changes: any, namespace: string): Promise<vo
   }
 }
 
+// Listen for keyboard commands
+chrome.commands.onCommand.addListener((command) => {
+  console.log('Fillo: Keyboard command received:', command);
+  handleKeyboardCommand(command);
+});
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'fill-field') {
     // Handle field filling request
     console.log('Fillo: Received fill-field request', request);
     sendResponse({ success: true });
+  } else if (request.action === 'keyboard-command') {
+    // Handle keyboard command from background
+    handleKeyboardCommand(request.command);
+    sendResponse({ success: true });
   }
   return true;
 });
+
+async function handleKeyboardCommand(command: string): Promise<void> {
+  if (!detector || !overlayManager || !settings) {
+    console.log('Fillo: Not initialized, ignoring keyboard command');
+    return;
+  }
+
+  switch (command) {
+    case 'generate-focused':
+      await handleGenerateFocused();
+      break;
+    case 'fill-all':
+      await handleFillAll();
+      break;
+    case 'toggle-overlay':
+      await handleToggleOverlay();
+      break;
+    default:
+      console.log('Fillo: Unknown keyboard command:', command);
+  }
+}
+
+async function handleGenerateFocused(): Promise<void> {
+  const focusedElement = document.activeElement as HTMLInputElement | HTMLTextAreaElement;
+  
+  if (!focusedElement || (!focusedElement.matches('input') && !focusedElement.matches('textarea'))) {
+    console.log('Fillo: No form field focused');
+    return;
+  }
+
+  const fields = detector!.getFields();
+  const fieldInfo = fields.find(f => f.element === focusedElement);
+  
+  if (!fieldInfo) {
+    console.log('Fillo: Focused element is not a detected form field');
+    return;
+  }
+
+  console.log('Fillo: Generating content for focused field:', fieldInfo);
+  
+  // Trigger generation through overlay manager
+  overlayManager!.generateContent(fieldInfo);
+}
+
+async function handleFillAll(): Promise<void> {
+  console.log('Fillo: Filling all form fields');
+  
+  const fields = detector!.getFields();
+  
+  for (const fieldInfo of fields) {
+    try {
+      await overlayManager!.generateContent(fieldInfo);
+      // Add small delay between generations to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('Fillo: Error filling field:', fieldInfo, error);
+    }
+  }
+}
+
+async function handleToggleOverlay(): Promise<void> {
+  const storage = StorageManager.getInstance();
+  const currentSettings = await storage.getSettings();
+  
+  // Toggle the showIcons setting
+  currentSettings.ui.showIcons = !currentSettings.ui.showIcons;
+  await storage.saveSettings(currentSettings);
+  
+  console.log('Fillo: Toggled overlay visibility:', currentSettings.ui.showIcons);
+  
+  // The storage change listener will handle re-applying overlays
+}
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
