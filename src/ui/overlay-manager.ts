@@ -24,6 +24,12 @@ export class OverlayManager {
   }
 
   async initialize(): Promise<void> {
+    // Ensure we're running in a browser context with DOM access
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      console.error('OverlayManager: Cannot initialize outside browser context');
+      return;
+    }
+
     // Check if any provider is configured by checking encrypted storage
     try {
       const encryptedKeysResult = await chrome.storage.local.get(['fillo_encrypted_keys']);
@@ -50,6 +56,11 @@ export class OverlayManager {
 
   private injectStyles(): void {
     if (this.stylesInjected) return;
+    
+    if (typeof document === 'undefined') {
+      console.error('OverlayManager: Cannot inject styles, document is not defined');
+      return;
+    }
 
     const style = document.createElement('style');
     style.id = 'fillo-overlay-styles';
@@ -144,6 +155,11 @@ export class OverlayManager {
   }
 
   private positionButton(element: HTMLElement, button: HTMLElement): void {
+    if (typeof window === 'undefined') {
+      console.error('OverlayManager: window is not defined, cannot position button');
+      return;
+    }
+
     const rect = element.getBoundingClientRect();
     const buttonSize = 28;
     const margin = 8;
@@ -214,6 +230,11 @@ export class OverlayManager {
   }
 
   private positionPanel(element: HTMLElement, panel: HTMLElement): void {
+    if (typeof window === 'undefined') {
+      console.error('OverlayManager: window is not defined, cannot position panel');
+      return;
+    }
+
     const button = this.activeButtons.get(element);
     if (!button) return;
 
