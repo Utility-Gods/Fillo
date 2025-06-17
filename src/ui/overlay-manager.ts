@@ -27,13 +27,10 @@ export class OverlayManager {
     // Check if any provider is configured
     const response = await this.sendMessage({ action: 'getSettings' });
     if (response.success && response.settings) {
-      // Check if any provider has an API key
+      // Check if any provider has an API key configured
       for (const providerName of Object.keys(response.settings.providers)) {
-        const testResult = await this.sendMessage({ 
-          action: 'testConnection', 
-          provider: providerName 
-        });
-        if (testResult.success && testResult.result) {
+        const provider = response.settings.providers[providerName];
+        if (provider.apiKey && provider.apiKey.trim() !== '') {
           this.hasProvider = true;
           break;
         }
