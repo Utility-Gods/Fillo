@@ -30,7 +30,7 @@
   "options_page": "src/options/options.html",
   "web_accessible_resources": [
     {
-      "resources": ["sql-wasm.wasm", "src/ui/overlay.css"],
+      "resources": ["src/ui/overlay.css"],
       "matches": [
         "http://localhost/*",
         "https://localhost/*",

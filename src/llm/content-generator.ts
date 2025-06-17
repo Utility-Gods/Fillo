@@ -41,7 +41,7 @@ export class ContentGenerator {
     if (useCache && !forceRegenerate) {
       const settings = await this.getSettings();
       if (settings?.cache.enabled) {
-        const creativityLevel = this.getCreativityLevel(fieldInfo.type);
+        const creativityLevel = await this.getCreativityLevel(fieldInfo.type);
         const cached = await this.cacheManager.get(fieldInfo.signature, creativityLevel);
         
         if (cached) {
@@ -93,7 +93,7 @@ export class ContentGenerator {
       
       // Try to fall back to cached content if available
       if (useCache) {
-        const creativityLevel = this.getCreativityLevel(fieldInfo.type);
+        const creativityLevel = await this.getCreativityLevel(fieldInfo.type);
         const similar = await this.cacheManager.getSimilar(fieldInfo.signature, creativityLevel, 1);
         
         if (similar.length > 0) {
@@ -115,7 +115,7 @@ export class ContentGenerator {
   async getSuggestions(fieldInfo: FieldInfo, limit: number = 3): Promise<ProviderResponse[]> {
     await this.initialize();
 
-    const creativityLevel = this.getCreativityLevel(fieldInfo.type);
+    const creativityLevel = await this.getCreativityLevel(fieldInfo.type);
     const cached = await this.cacheManager.getSimilar(fieldInfo.signature, creativityLevel, limit);
 
     return cached.map(entry => ({
@@ -137,7 +137,7 @@ export class ContentGenerator {
     for (let i = 0; i < count; i++) {
       try {
         // Vary creativity slightly for each generation if requested
-        const baseCreativity = this.getCreativityLevel(fieldInfo.type);
+        const baseCreativity = await this.getCreativityLevel(fieldInfo.type);
         const creativity = varyCreativity 
           ? Math.min(2.0, Math.max(0.1, baseCreativity + (i * 0.2)))
           : baseCreativity;

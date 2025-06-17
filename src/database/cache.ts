@@ -1,12 +1,11 @@
-import { SQLiteManager } from './sqlite';
-import { CacheEntry } from '../types';
+import { IndexedDBManager, CacheEntry } from './indexeddb';
 
 export class CacheManager {
   private static instance: CacheManager;
-  private db: SQLiteManager;
+  private db: IndexedDBManager;
 
   private constructor() {
-    this.db = SQLiteManager.getInstance();
+    this.db = IndexedDBManager.getInstance();
   }
 
   static getInstance(): CacheManager {
@@ -23,18 +22,11 @@ export class CacheManager {
   async get(signature: string, creativityLevel: number): Promise<CacheEntry | null> {
     const tolerance = 0.1; // Allow some tolerance in creativity level matching
     
-    const results = await this.db.query(`
-      SELECT * FROM field_cache 
-      WHERE field_signature = ? 
-      AND ABS(creativity_level - ?) <= ?
-      AND expires_at > datetime('now')
-      ORDER BY ABS(creativity_level - ?) ASC
-      LIMIT 1
-    `, [signature, creativityLevel, tolerance, creativityLevel]);
+    const result = await this.db.getBySignature(signature, creativityLevel, tolerance);
 
-    if (results.length > 0) {
+    if (result) {
       await this.incrementStats('hits');
-      return results[0] as CacheEntry;
+      return result;
     }
 
     await this.incrementStats('misses');
@@ -53,44 +45,27 @@ export class CacheManager {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expirationDays);
 
-    await this.db.execute(`
-      INSERT OR REPLACE INTO field_cache 
-      (field_signature, field_type, creativity_level, generated_content, provider, model, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [signature, fieldType, creativityLevel, content, provider, model, expiresAt.toISOString()]);
+    const entry = {
+      fieldSignature: signature,
+      fieldType,
+      creativityLevel,
+      generatedContent: content,
+      provider,
+      model,
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt.toISOString()
+    };
+
+    await this.db.add(entry);
   }
 
   async getSimilar(signature: string, creativityLevel: number, limit: number = 3): Promise<CacheEntry[]> {
-    // Extract base signature (remove trailing identifiers)
-    const baseSignature = signature.split('-').slice(0, -1).join('-');
-    
-    const results = await this.db.query(`
-      SELECT * FROM field_cache 
-      WHERE (field_signature LIKE ? OR field_signature = ?)
-      AND expires_at > datetime('now')
-      ORDER BY 
-        CASE WHEN field_signature = ? THEN 0 ELSE 1 END,
-        ABS(creativity_level - ?) ASC,
-        created_at DESC
-      LIMIT ?
-    `, [`${baseSignature}%`, signature, signature, creativityLevel, limit]);
-
-    return results as CacheEntry[];
+    return await this.db.getSimilar(signature, creativityLevel, limit);
   }
 
   async getByType(fieldType: string, creativityLevel: number, limit: number = 5): Promise<CacheEntry[]> {
     const tolerance = 0.2;
-    
-    const results = await this.db.query(`
-      SELECT * FROM field_cache 
-      WHERE field_type = ?
-      AND ABS(creativity_level - ?) <= ?
-      AND expires_at > datetime('now')
-      ORDER BY ABS(creativity_level - ?) ASC, created_at DESC
-      LIMIT ?
-    `, [fieldType, creativityLevel, tolerance, creativityLevel, limit]);
-
-    return results as CacheEntry[];
+    return await this.db.getByType(fieldType, creativityLevel, limit, tolerance);
   }
 
   async cleanup(): Promise<void> {
@@ -98,7 +73,7 @@ export class CacheManager {
   }
 
   async clear(): Promise<void> {
-    await this.db.clearCache();
+    await this.db.clear();
     await chrome.storage.local.remove(['fillo_stats']);
   }
 
@@ -111,49 +86,23 @@ export class CacheManager {
     entriesByType: Record<string, number>;
     entriesByCreativity: Record<string, number>;
   }> {
-    const baseStats = await this.db.getStats();
+    const dbStats = await this.db.getStats();
     
-    // Get entries by type
-    const typeResults = await this.db.query(`
-      SELECT field_type, COUNT(*) as count 
-      FROM field_cache 
-      WHERE expires_at > datetime('now')
-      GROUP BY field_type
-    `);
+    // Get cache hit/miss statistics from Chrome storage
+    const result = await chrome.storage.local.get(['fillo_stats']);
+    const storageStats = result.fillo_stats || { hits: 0, misses: 0 };
     
-    const entriesByType: Record<string, number> = {};
-    typeResults.forEach(row => {
-      entriesByType[row.field_type] = row.count;
-    });
-
-    // Get entries by creativity level (grouped)
-    const creativityResults = await this.db.query(`
-      SELECT 
-        CASE 
-          WHEN creativity_level <= 0.3 THEN 'Predictable'
-          WHEN creativity_level <= 0.7 THEN 'Balanced'
-          WHEN creativity_level <= 1.2 THEN 'Creative'
-          ELSE 'Experimental'
-        END as creativity_group,
-        COUNT(*) as count
-      FROM field_cache 
-      WHERE expires_at > datetime('now')
-      GROUP BY creativity_group
-    `);
-
-    const entriesByCreativity: Record<string, number> = {};
-    creativityResults.forEach(row => {
-      entriesByCreativity[row.creativity_group] = row.count;
-    });
-
-    const totalRequests = baseStats.cacheHits + baseStats.cacheMisses;
-    const hitRate = totalRequests > 0 ? (baseStats.cacheHits / totalRequests) * 100 : 0;
+    const totalRequests = storageStats.hits + storageStats.misses;
+    const hitRate = totalRequests > 0 ? (storageStats.hits / totalRequests) * 100 : 0;
 
     return {
-      ...baseStats,
+      totalEntries: dbStats.totalEntries,
+      cacheHits: storageStats.hits,
+      cacheMisses: storageStats.misses,
       hitRate,
-      entriesByType,
-      entriesByCreativity
+      storageSize: dbStats.storageSize,
+      entriesByType: dbStats.entriesByType,
+      entriesByCreativity: dbStats.entriesByCreativity
     };
   }
 
