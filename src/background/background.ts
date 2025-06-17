@@ -83,6 +83,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (request.action === 'getCacheStats') {
+    handleGetCacheStats(sendResponse);
+    return true; // Will respond asynchronously
+  }
+
   return false;
 });
 
@@ -124,6 +129,19 @@ async function handleTestConnection(request: any, sendResponse: Function) {
     sendResponse({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to test connection' 
+    });
+  }
+}
+
+async function handleGetCacheStats(sendResponse: Function) {
+  try {
+    const contentGenerator = ContentGenerator.getInstance();
+    const stats = await contentGenerator.getCacheStats();
+    sendResponse({ success: true, stats });
+  } catch (error) {
+    sendResponse({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to get cache stats' 
     });
   }
 }
