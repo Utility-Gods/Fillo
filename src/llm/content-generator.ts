@@ -1,6 +1,7 @@
 import { FieldInfo, ProviderResponse } from '../types';
 import { CacheManager } from '../database/cache';
 import { ProviderManager } from './provider-manager';
+import { StorageManager } from '../storage/storage';
 
 export class ContentGenerator {
   private static instance: ContentGenerator;
@@ -161,7 +162,6 @@ export class ContentGenerator {
   }
 
   private async getSettings() {
-    const { StorageManager } = await import('../storage/storage');
     const storage = StorageManager.getInstance();
     return storage.getSettings();
   }
