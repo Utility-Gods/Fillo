@@ -332,9 +332,10 @@ export class OverlayManager {
     // Settings link
     const settingsLink = panel.querySelector('[data-action="open-settings"]');
     if (settingsLink) {
-      settingsLink.addEventListener('click', (e) => {
+      settingsLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        chrome.runtime.openOptionsPage();
+        // Send message to background script to open options page
+        await this.sendMessage({ action: 'openOptionsPage' });
         this.closePanel(element);
       });
     }
