@@ -55,7 +55,8 @@ You are implementing **Fillo**, a Chrome extension that:
 - [ ] Implement Google Gemini provider
 - [ ] Implement Ollama provider
 - [ ] Add connection testing for all providers
-- [ ] **COMMIT: "feat: implement all LLM providers with creativity support"**
+- [ ] Enhance LLM prompts with page context (title, meta tags, parent elements)
+- [ ] **COMMIT: "feat: implement all LLM providers with creativity support and enhanced context"**
 
 ### Phase 5: Form Detection & UI ✅
 - [ ] Build form field detection system

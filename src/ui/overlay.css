@@ -342,3 +342,158 @@ select ~ .fillo-field-button {
     border-color: #800000;
   }
 }
+
+/* Image generation panel - make wider for better image preview */
+.fillo-suggestion-panel.fillo-image-panel {
+  width: 420px;
+}
+
+/* Image generation specific styles */
+.fillo-image-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fillo-image-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fillo-image-option label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.fillo-image-option select {
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fillo-image-option select:hover {
+  border-color: #007bff;
+}
+
+.fillo-image-option select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.fillo-image-preview-area {
+  margin-top: 20px;
+  min-height: 250px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+}
+
+.fillo-image-placeholder {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.fillo-generated-image {
+  max-width: 100%;
+  max-height: 350px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.fillo-image-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.fillo-generate-image-button {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #007bff;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fillo-use-image-button,
+.fillo-regenerate-image-button {
+  padding: 10px 16px;
+  border: 1px solid #007bff;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fillo-generate-image-button:hover:not(:disabled),
+.fillo-use-image-button:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.fillo-regenerate-image-button {
+  background: white;
+  color: #007bff;
+}
+
+.fillo-regenerate-image-button:hover {
+  background: #f0f8ff;
+}
+
+.fillo-generate-image-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark mode for image generation */
+@media (prefers-color-scheme: dark) {
+  .fillo-image-option label {
+    color: #aaa;
+  }
+  
+  .fillo-image-option select {
+    background: #2a2a2a;
+    border-color: #444;
+    color: white;
+  }
+  
+  .fillo-image-preview-area {
+    border-color: #444;
+  }
+  
+  .fillo-image-placeholder {
+    color: #666;
+  }
+}

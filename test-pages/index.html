@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fillo Test Pages</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .test-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .test-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    .test-card h3 {
+      margin-top: 0;
+      color: #007bff;
+    }
+    .test-card p {
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .test-card a {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .test-card a:hover {
+      background: #0056b3;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+    .status.ready {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.wip {
+      background: #fff3cd;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <h1>Fillo Extension Test Pages</h1>
+  
+  <div class="test-grid">
+    <div class="test-card">
+      <h3>Basic Form Fields <span class="status ready">Ready</span></h3>
+      <p>Test basic input fields like text, email, password, and textarea.</p>
+      <a href="basic-forms.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>Image Upload Fields <span class="status ready">Ready</span></h3>
+      <p>Test file upload fields with various configurations and accept attributes.</p>
+      <a href="image-uploads.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>Complex Forms <span class="status ready">Ready</span></h3>
+      <p>Test forms with multiple field types, including the exact input from your example.</p>
+      <a href="complex-forms.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>Registration Form <span class="status ready">Ready</span></h3>
+      <p>Test a typical user registration form with various field types.</p>
+      <a href="registration.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>Profile Form <span class="status ready">Ready</span></h3>
+      <p>Test a profile editing form with avatar upload and bio fields.</p>
+      <a href="profile.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>E-commerce Form <span class="status ready">Ready</span></h3>
+      <p>Test product upload form with multiple image fields.</p>
+      <a href="ecommerce.html">Open Test</a>
+    </div>
+
+    <div class="test-card">
+      <h3>Debug Form <span class="status ready">Debug</span></h3>
+      <p>Debug your exact input structure with detailed logging.</p>
+      <a href="debug-form.html">Open Debug</a>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; padding: 20px; background: #e8f4fd; border-radius: 8px;">
+    <h2>Testing Instructions</h2>
+    <ol>
+      <li>Make sure you're running the development server: <code>bun run dev</code></li>
+      <li>Load the extension in Chrome (chrome://extensions)</li>
+      <li>Navigate to any test page using <code>http://localhost:8080/test-pages/</code></li>
+      <li>Look for the ✨ or 🖼️ icons next to form fields</li>
+      <li>Click the icons to generate content or images</li>
+    </ol>
+  </div>
+</body>
+</html>

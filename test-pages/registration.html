@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Form Test - Fillo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .registration-form {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .form-header h2 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .form-header p {
+      color: #666;
+      margin: 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+    }
+    .required {
+      color: #dc3545;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e5e9;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    .password-requirements {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .photo-upload {
+      text-align: center;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background: #fafafa;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .photo-upload:hover {
+      border-color: #007bff;
+    }
+    .photo-upload input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .photo-icon {
+      font-size: 40px;
+      color: #ddd;
+      margin-bottom: 10px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+    .submit-btn:hover {
+      background: #0056b3;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to Test Pages</a>
+  <h1>Registration Form Test</h1>
+
+  <div class="registration-form">
+    <div class="form-header">
+      <h2>Create Your Account</h2>
+      <p>Join our community and get started today</p>
+    </div>
+
+    <form id="registrationForm">
+      <!-- Profile Photo -->
+      <div class="form-group">
+        <label for="profilePhoto">Profile Photo</label>
+        <div class="photo-upload" onclick="document.getElementById('profilePhoto').click()">
+          <div class="photo-icon">👤</div>
+          <div>
+            <strong>Upload Profile Photo</strong><br>
+            <small>JPG, PNG or GIF (max 5MB)</small>
+          </div>
+          <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*">
+        </div>
+      </div>
+
+      <!-- Personal Information -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regFirstName">First Name <span class="required">*</span></label>
+          <input type="text" id="regFirstName" name="firstName" required placeholder="John">
+        </div>
+        <div class="form-group">
+          <label for="regLastName">Last Name <span class="required">*</span></label>
+          <input type="text" id="regLastName" name="lastName" required placeholder="Doe">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="regEmail">Email Address <span class="required">*</span></label>
+        <input type="email" id="regEmail" name="email" required placeholder="john.doe@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="regUsername">Username <span class="required">*</span></label>
+        <input type="text" id="regUsername" name="username" required placeholder="johndoe123">
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="regPassword">Password <span class="required">*</span></label>
+        <input type="password" id="regPassword" name="password" required placeholder="Enter a strong password">
+        <div class="password-requirements">
+          Minimum 8 characters with at least one uppercase, lowercase, and number
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+      </div>
+
+      <!-- Additional Information -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regPhone">Phone Number</label>
+          <input type="tel" id="regPhone" name="phone" placeholder="(555) 123-4567">
+        </div>
+        <div class="form-group">
+          <label for="regBirthDate">Birth Date</label>
+          <input type="date" id="regBirthDate" name="birthDate">
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="form-group">
+        <label for="regCountry">Country</label>
+        <select id="regCountry" name="country">
+          <option value="">Select your country</option>
+          <option value="us">United States</option>
+          <option value="ca">Canada</option>
+          <option value="gb">United Kingdom</option>
+          <option value="au">Australia</option>
+          <option value="de">Germany</option>
+          <option value="fr">France</option>
+          <option value="jp">Japan</option>
+          <option value="br">Brazil</option>
+          <option value="in">India</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="regCity">City</label>
+        <input type="text" id="regCity" name="city" placeholder="San Francisco">
+      </div>
+
+      <!-- Professional Information -->
+      <div class="form-group">
+        <label for="regCompany">Company</label>
+        <input type="text" id="regCompany" name="company" placeholder="Acme Corporation">
+      </div>
+
+      <div class="form-group">
+        <label for="regJobTitle">Job Title</label>
+        <input type="text" id="regJobTitle" name="jobTitle" placeholder="Software Engineer">
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group">
+        <label for="regBio">Bio</label>
+        <textarea id="regBio" name="bio" placeholder="Tell us a little about yourself..." rows="4"></textarea>
+      </div>
+
+      <!-- Interests -->
+      <div class="form-group">
+        <label for="interests">Interests</label>
+        <input type="text" id="interests" name="interests" placeholder="Technology, Music, Travel, etc.">
+      </div>
+
+      <!-- Social Media -->
+      <div class="form-group">
+        <label for="regWebsite">Personal Website</label>
+        <input type="url" id="regWebsite" name="website" placeholder="https://yourwebsite.com">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regTwitter">Twitter</label>
+          <input type="text" id="regTwitter" name="twitter" placeholder="@yourusername">
+        </div>
+        <div class="form-group">
+          <label for="regLinkedIn">LinkedIn</label>
+          <input type="url" id="regLinkedIn" name="linkedin" placeholder="linkedin.com/in/yourname">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">Create Account</button>
+    </form>
+  </div>
+
+  <script>
+    // Handle form submission
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Form submitted! (This is just a test - no actual registration)');
+    });
+
+    // Handle profile photo upload
+    document.getElementById('profilePhoto').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const photoUpload = document.querySelector('.photo-upload');
+        photoUpload.innerHTML = `
+          <div class="photo-icon">✅</div>
+          <div>
+            <strong>Photo Selected</strong><br>
+            <small>${file.name}</small>
+          </div>
+        `;
+      }
+    });
+
+    // Monitor Fillo activity
+    document.addEventListener('fillo:fields-changed', (event) => {
+      console.log('Fillo detected registration fields:', event.detail.fields);
+      
+      // Count field types
+      const fieldTypes = {};
+      event.detail.fields.forEach(field => {
+        fieldTypes[field.type] = (fieldTypes[field.type] || 0) + 1;
+      });
+      
+      console.log('Field type counts:', fieldTypes);
+    });
+
+    // Track button additions
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fillo-field-button')) {
+            console.log('Fillo button added to registration form');
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  </script>
+</body>
+</html>

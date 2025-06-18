@@ -53,7 +53,7 @@ export class OllamaProvider extends BaseLLMProvider {
   }
 
   async generateContent(request: LLMRequest): Promise<string> {
-    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context);
+    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context, request.pageContext);
     
     const response = await this.makeRequest(`${this.baseUrl}/chat/completions`, {
       method: 'POST',

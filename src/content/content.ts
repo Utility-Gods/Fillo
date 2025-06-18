@@ -8,6 +8,12 @@ let overlayManager: OverlayManager | null = null;
 let settings: any = null;
 
 async function init(): Promise<void> {
+  console.log('Fillo: Checking activation...', {
+    hostname: window.location.hostname,
+    readyState: document.readyState,
+    shouldActivate: shouldActivate()
+  });
+  
   if (!shouldActivate()) {
     console.log('Fillo: Not activating on this domain');
     return;
@@ -45,9 +51,20 @@ function handleFieldsChanged(event: CustomEvent): void {
 
   const { fields } = event.detail;
   console.log('Fillo: Fields detected:', fields.length);
+  
+  // Log field details for debugging
+  fields.forEach((field: any, index: number) => {
+    console.log(`Fillo: Field ${index}:`, {
+      type: field.type,
+      label: field.label,
+      tagName: field.element.tagName,
+      inputType: field.element.type
+    });
+  });
 
   // Only show icons if enabled in settings
   if (!settings.ui.showIcons) {
+    console.log('Fillo: Icons disabled in settings');
     overlayManager.detachAll();
     return;
   }

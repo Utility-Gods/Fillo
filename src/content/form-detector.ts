@@ -67,7 +67,7 @@ export class FormDetector {
     if (element.tagName === 'INPUT') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      return ['text', 'email', 'password', 'search', 'url', 'tel', 'number'].includes(type);
+      return ['text', 'email', 'password', 'search', 'url', 'tel', 'number', 'file'].includes(type);
     }
 
     return false;
@@ -75,6 +75,15 @@ export class FormDetector {
 
   private isVisible(element: Element): boolean {
     const style = window.getComputedStyle(element);
+    
+    // For file inputs, opacity: 0 is commonly used for custom styling
+    // We should still consider them visible if they're not display:none or visibility:hidden
+    const isFileInput = element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'file';
+    
+    if (isFileInput) {
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+    
     return style.display !== 'none' && 
            style.visibility !== 'hidden' && 
            style.opacity !== '0';
@@ -103,6 +112,19 @@ export class FormDetector {
     
     const htmlInput = input as HTMLInputElement;
     const type = htmlInput.type.toLowerCase();
+    
+    // Handle file input types
+    if (type === 'file') {
+      const accept = htmlInput.accept?.toLowerCase() || '';
+      const name = htmlInput.name?.toLowerCase() || '';
+      const id = htmlInput.id?.toLowerCase() || '';
+      const combined = `${accept} ${name} ${id}`;
+      
+      if (accept.includes('image/') || combined.includes('image') || combined.includes('photo') || combined.includes('picture')) {
+        return 'image';
+      }
+      return 'file';
+    }
     
     // Infer semantic type from attributes
     const name = htmlInput.name?.toLowerCase() || '';

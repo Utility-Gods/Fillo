@@ -1,4 +1,5 @@
 import { FieldInfo, ProviderResponse } from '../types';
+import { ContextExtractor } from '../utils/context-extractor';
 
 export interface OverlayOptions {
   showIcons: boolean;
@@ -65,14 +66,22 @@ export class OverlayManager {
     style.id = 'fillo-overlay-styles';
     
     // Import the CSS content
+    console.log('Fillo: Loading overlay styles from:', chrome.runtime.getURL('src/ui/overlay.css'));
+    
     fetch(chrome.runtime.getURL('src/ui/overlay.css'))
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load CSS: ${response.status} ${response.statusText}`);
+        }
+        return response.text();
+      })
       .then(css => {
         style.textContent = css;
         document.head.appendChild(style);
+        console.log('Fillo: Overlay styles injected successfully');
       })
       .catch(error => {
-        console.error('Failed to load overlay styles:', error);
+        console.error('Fillo: Failed to load overlay styles:', error);
       });
 
     this.stylesInjected = true;
@@ -80,7 +89,17 @@ export class OverlayManager {
 
   attachToField(element: HTMLElement, fieldInfo: FieldInfo): void {
     // Don't attach if already attached
-    if (this.activeFields.has(element)) return;
+    if (this.activeFields.has(element)) {
+      console.log('Fillo: Field already has button attached');
+      return;
+    }
+
+    console.log('Fillo: Attaching button to field:', {
+      type: fieldInfo.type,
+      label: fieldInfo.label,
+      element: element.tagName,
+      inputType: (element as HTMLInputElement).type
+    });
 
     this.activeFields.set(element, fieldInfo);
     
@@ -128,8 +147,15 @@ export class OverlayManager {
   private createFieldButton(element: HTMLElement, fieldInfo: FieldInfo): HTMLElement {
     const button = document.createElement('button');
     button.className = 'fillo-field-button';
-    button.innerHTML = '✨';
-    button.title = 'Generate content with AI';
+    
+    // Use different icon for image fields
+    if (fieldInfo.type === 'image' || fieldInfo.type === 'file') {
+      button.innerHTML = '🖼️';
+      button.title = 'Generate image with AI';
+    } else {
+      button.innerHTML = '✨';
+      button.title = 'Generate content with AI';
+    }
 
     button.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -159,9 +185,30 @@ export class OverlayManager {
       return;
     }
 
-    const rect = element.getBoundingClientRect();
+    let rect = element.getBoundingClientRect();
     const buttonSize = 28;
     const margin = 8;
+
+    // For file inputs with opacity 0, try to find a visible parent container
+    if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
+      const style = window.getComputedStyle(element);
+      if (style.opacity === '0' || parseFloat(style.opacity) < 0.1) {
+        // Look for a visible parent container (label, div, etc.)
+        let container = element.parentElement;
+        while (container && container !== document.body) {
+          const containerStyle = window.getComputedStyle(container);
+          if (containerStyle.opacity !== '0' && parseFloat(containerStyle.opacity || '1') > 0.1) {
+            const containerRect = container.getBoundingClientRect();
+            if (containerRect.width > 0 && containerRect.height > 0) {
+              rect = containerRect;
+              console.log('Fillo: Using container rect for file input:', container);
+              break;
+            }
+          }
+          container = container.parentElement;
+        }
+      }
+    }
 
     // Position absolutely relative to the viewport
     button.style.position = 'absolute';
@@ -172,38 +219,63 @@ export class OverlayManager {
     } else {
       button.style.top = `${rect.top + (rect.height - buttonSize) / 2 + window.scrollY}px`;
     }
+
+    console.log('Fillo: Button positioned at:', {
+      left: button.style.left,
+      top: button.style.top,
+      elementRect: rect,
+      elementType: element.tagName,
+      inputType: (element as HTMLInputElement).type || 'N/A',
+      buttonVisible: button.offsetWidth > 0
+    });
   }
 
   private async showSuggestionPanel(element: HTMLElement, fieldInfo: FieldInfo): Promise<void> {
     const panel = document.createElement('div');
     panel.className = 'fillo-suggestion-panel';
 
+    // Add specific class for image panels to make them wider
+    if (fieldInfo.type === 'image' || fieldInfo.type === 'file') {
+      panel.classList.add('fillo-image-panel');
+    }
+
     // Check if provider is configured
     if (!this.hasProvider) {
       panel.innerHTML = this.createNoProviderContent();
     } else {
-      panel.innerHTML = this.createLoadingContent();
-      
-      try {
-        // Generate content through background script
-        const response = await this.sendMessage({
-          action: 'generateContent',
-          fieldInfo: {
-            type: fieldInfo.type,
-            label: fieldInfo.label,
-            context: fieldInfo.context,
-            signature: fieldInfo.signature
-          },
-          options: { useCache: true }
-        });
+      // Handle image fields differently
+      if (fieldInfo.type === 'image' || fieldInfo.type === 'file') {
+        await this.showImageGenerationPanel(panel, element, fieldInfo);
+      } else {
+        panel.innerHTML = this.createLoadingContent();
         
-        if (response.success && response.response) {
-          panel.innerHTML = this.createSuggestionsContent([response.response], fieldInfo);
-        } else {
-          throw new Error(response.error || 'Failed to generate content');
+        try {
+          // Extract page context for enhanced content generation
+          const pageContext = ContextExtractor.extractPageContext(element);
+          
+          // Generate content through background script
+          const response = await this.sendMessage({
+            action: 'generateContent',
+            fieldInfo: {
+              type: fieldInfo.type,
+              label: fieldInfo.label,
+              context: fieldInfo.context,
+              signature: fieldInfo.signature
+            },
+            options: { 
+              useCache: true,
+              pageContext 
+            }
+          });
+          
+          if (response.success && response.response) {
+            panel.innerHTML = this.createSuggestionsContent([response.response], fieldInfo);
+          } else {
+            throw new Error(response.error || 'Failed to generate content');
+          }
+        } catch (error) {
+          panel.innerHTML = this.createErrorContent(error);
         }
-      } catch (error) {
-        panel.innerHTML = this.createErrorContent(error);
       }
     }
 
@@ -220,6 +292,7 @@ export class OverlayManager {
 
     // Close on outside click
     setTimeout(() => {
+      const button = this.activeButtons.get(element);
       document.addEventListener('click', (e) => {
         if (!panel.contains(e.target as Node) && e.target !== button) {
           this.closePanel(element);
@@ -291,6 +364,59 @@ export class OverlayManager {
     `;
   }
 
+  private async showImageGenerationPanel(panel: HTMLElement, element: HTMLElement, fieldInfo: FieldInfo): Promise<void> {
+    panel.innerHTML = this.createImageGenerationContent(fieldInfo);
+  }
+
+  private createImageGenerationContent(fieldInfo: FieldInfo): string {
+    const header = `
+      <div class="fillo-panel-header">
+        <h3 class="fillo-panel-title">AI Image Generation</h3>
+        <button class="fillo-panel-close" data-action="close">✕</button>
+      </div>
+    `;
+
+    const content = `
+      <div class="fillo-panel-content">
+        <div class="fillo-image-options">
+          <div class="fillo-image-option">
+            <label>Image Size:</label>
+            <select class="fillo-image-size" data-setting="size">
+              <option value="auto" selected>Auto (best for context)</option>
+              <option value="1024x1024">Square (1024x1024)</option>
+              <option value="1536x1024">Landscape (1536x1024)</option>
+              <option value="1024x1536">Portrait (1024x1536)</option>
+            </select>
+          </div>
+          <div class="fillo-image-option">
+            <label>Quality:</label>
+            <select class="fillo-image-quality" data-setting="quality">
+              <option value="auto" selected>Auto</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="fillo-image-preview-area" id="image-preview">
+            <div class="fillo-image-placeholder">
+              Click "Generate Image" to create an AI image
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const actions = `
+      <div class="fillo-image-actions">
+        <button class="fillo-generate-image-button" data-action="generate-image">
+          🎨 Generate Image
+        </button>
+      </div>
+    `;
+
+    return header + content + actions;
+  }
+
   private createSuggestionsContent(suggestions: ProviderResponse[], fieldInfo: FieldInfo): string {
     const header = `
       <div class="fillo-panel-header">
@@ -357,33 +483,45 @@ export class OverlayManager {
       });
     }
 
-    // Suggestion clicks
-    const suggestions = panel.querySelectorAll('.fillo-suggestion');
-    suggestions.forEach((suggestion) => {
-      suggestion.addEventListener('click', () => {
-        const text = suggestion.querySelector('.fillo-suggestion-text')?.textContent;
-        if (text) {
-          this.fillField(element, text);
-          this.closePanel(element);
-        }
+    // For image fields
+    if (fieldInfo.type === 'image' || fieldInfo.type === 'file') {
+      const generateImageBtn = panel.querySelector('[data-action="generate-image"]');
+      if (generateImageBtn) {
+        generateImageBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await this.generateImage(panel, element, fieldInfo);
+        });
+      }
+    } else {
+      // For text fields
+      // Suggestion clicks
+      const suggestions = panel.querySelectorAll('.fillo-suggestion');
+      suggestions.forEach((suggestion) => {
+        suggestion.addEventListener('click', () => {
+          const text = suggestion.querySelector('.fillo-suggestion-text')?.textContent;
+          if (text) {
+            this.fillField(element, text);
+            this.closePanel(element);
+          }
+        });
       });
-    });
 
-    // Regenerate buttons
-    const regenerateBtn = panel.querySelector('[data-action="regenerate"]');
-    if (regenerateBtn) {
-      regenerateBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await this.regenerateContent(panel, element, fieldInfo, false);
-      });
-    }
+      // Regenerate buttons
+      const regenerateBtn = panel.querySelector('[data-action="regenerate"]');
+      if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await this.regenerateContent(panel, element, fieldInfo, false);
+        });
+      }
 
-    const regenerateMultipleBtn = panel.querySelector('[data-action="regenerate-multiple"]');
-    if (regenerateMultipleBtn) {
-      regenerateMultipleBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await this.regenerateContent(panel, element, fieldInfo, true);
-      });
+      const regenerateMultipleBtn = panel.querySelector('[data-action="regenerate-multiple"]');
+      if (regenerateMultipleBtn) {
+        regenerateMultipleBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await this.regenerateContent(panel, element, fieldInfo, true);
+        });
+      }
     }
   }
 
@@ -394,6 +532,9 @@ export class OverlayManager {
     content.innerHTML = this.createLoadingContent();
 
     try {
+      // Extract page context for enhanced content generation
+      const pageContext = ContextExtractor.extractPageContext(element);
+      
       const responses: ProviderResponse[] = [];
       
       if (multiple) {
@@ -410,7 +551,8 @@ export class OverlayManager {
             options: { 
               useCache: false, 
               forceRegenerate: true,
-              varyCreativity: true 
+              varyCreativity: true,
+              pageContext 
             }
           });
           
@@ -430,7 +572,8 @@ export class OverlayManager {
           },
           options: { 
             useCache: false, 
-            forceRegenerate: true 
+            forceRegenerate: true,
+            pageContext 
           }
         });
         
@@ -448,6 +591,109 @@ export class OverlayManager {
       }
     } catch (error) {
       content.innerHTML = this.createErrorContent(error);
+    }
+  }
+
+  private async generateImage(panel: HTMLElement, element: HTMLElement, fieldInfo: FieldInfo): Promise<void> {
+    const previewArea = panel.querySelector('.fillo-image-preview-area');
+    const generateBtn = panel.querySelector('[data-action="generate-image"]') as HTMLButtonElement;
+    
+    if (!previewArea || !generateBtn) return;
+
+    // Get selected options
+    const sizeSelect = panel.querySelector('[data-setting="size"]') as HTMLSelectElement;
+    const qualitySelect = panel.querySelector('[data-setting="quality"]') as HTMLSelectElement;
+    
+    const size = sizeSelect?.value || '1024x1024';
+    const quality = qualitySelect?.value || 'standard';
+
+    // Show loading state
+    generateBtn.disabled = true;
+    generateBtn.textContent = '⏳ Generating...';
+    previewArea.innerHTML = '<div class="fillo-loading-spinner"></div><div>Generating image...</div>';
+
+    try {
+      // Send message to background script to generate image
+      const response = await this.sendMessage({
+        action: 'generateImage',
+        fieldInfo: {
+          type: fieldInfo.type,
+          label: fieldInfo.label,
+          context: fieldInfo.context,
+          signature: fieldInfo.signature
+        },
+        options: {
+          size,
+          quality
+        }
+      });
+
+      if (response.success && response.imageUrl) {
+        // Show preview
+        previewArea.innerHTML = `
+          <img src="${response.imageUrl}" alt="Generated image" class="fillo-generated-image" />
+          <div class="fillo-image-actions">
+            <button class="fillo-use-image-button" data-action="use-image">
+              ✅ Use This Image
+            </button>
+            <button class="fillo-regenerate-image-button" data-action="regenerate-image">
+              🔄 Generate Another
+            </button>
+          </div>
+        `;
+
+        // Store the image data for later use
+        (previewArea as any)._imageData = {
+          url: response.imageUrl,
+          filename: response.filename || `generated-${Date.now()}.png`
+        };
+
+        // Add event listeners for new buttons
+        const useImageBtn = previewArea.querySelector('[data-action="use-image"]');
+        if (useImageBtn) {
+          useImageBtn.addEventListener('click', async () => {
+            await this.fillImageField(element as HTMLInputElement, (previewArea as any)._imageData);
+            this.closePanel(element);
+          });
+        }
+
+        const regenerateBtn = previewArea.querySelector('[data-action="regenerate-image"]');
+        if (regenerateBtn) {
+          regenerateBtn.addEventListener('click', async () => {
+            await this.generateImage(panel, element, fieldInfo);
+          });
+        }
+      } else {
+        throw new Error(response.error || 'Failed to generate image');
+      }
+    } catch (error) {
+      previewArea.innerHTML = `<div class="fillo-error-message">${error instanceof Error ? error.message : 'Failed to generate image'}</div>`;
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = '🎨 Generate Image';
+    }
+  }
+
+  private async fillImageField(input: HTMLInputElement, imageData: { url: string; filename: string }): Promise<void> {
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(imageData.url);
+      const blob = await response.blob();
+      
+      // Create a File object
+      const file = new File([blob], imageData.filename, { type: blob.type });
+      
+      // Create a DataTransfer object and add the file
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      
+      // Set the files property of the input
+      input.files = dataTransfer.files;
+      
+      // Trigger change event
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (error) {
+      console.error('Failed to set image file:', error);
     }
   }
 

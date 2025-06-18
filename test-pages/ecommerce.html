@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-commerce Product Form Test - Fillo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .product-form {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .form-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .form-header h2 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .form-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #007bff;
+    }
+    .form-section h3 {
+      margin-top: 0;
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+    }
+    .required {
+      color: #dc3545;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    .image-upload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    .image-upload-card {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: white;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .image-upload-card:hover {
+      border-color: #007bff;
+    }
+    .image-upload-card input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-icon {
+      font-size: 32px;
+      color: #ddd;
+      margin-bottom: 10px;
+    }
+    .upload-text {
+      color: #666;
+      font-size: 14px;
+    }
+    .image-preview {
+      width: 100%;
+      height: 120px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .price-input {
+      position: relative;
+    }
+    .price-input::before {
+      content: '$';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+      font-weight: 500;
+    }
+    .price-input input {
+      padding-left: 25px;
+    }
+    .variant-section {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .variant-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .variant-title {
+      color: #333;
+      font-weight: 600;
+      margin: 0;
+    }
+    .add-variant-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    @media (max-width: 768px) {
+      .form-row, .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+      .image-upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to Test Pages</a>
+  <h1>E-commerce Product Form Test</h1>
+
+  <div class="product-form">
+    <div class="form-header">
+      <h2>Add New Product</h2>
+      <p>Create a new product listing for your store</p>
+    </div>
+
+    <form id="productForm">
+      <!-- Basic Product Information -->
+      <div class="form-section">
+        <h3>Basic Information</h3>
+        <div class="form-group">
+          <label for="productName">Product Name <span class="required">*</span></label>
+          <input type="text" id="productName" name="productName" required placeholder="Amazing Wireless Headphones">
+        </div>
+        <div class="form-group">
+          <label for="productDescription">Description <span class="required">*</span></label>
+          <textarea id="productDescription" name="description" required placeholder="Detailed product description..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="productBrand">Brand</label>
+            <input type="text" id="productBrand" name="brand" placeholder="TechBrand">
+          </div>
+          <div class="form-group">
+            <label for="productModel">Model</label>
+            <input type="text" id="productModel" name="model" placeholder="TB-H100">
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Images -->
+      <div class="form-section">
+        <h3>Product Images</h3>
+        <div class="image-upload-grid">
+          <div class="image-upload-card" onclick="document.getElementById('mainImage').click()">
+            <div class="image-preview" id="mainPreview">
+              <div class="upload-icon">📷</div>
+            </div>
+            <div class="upload-text">
+              <strong>Main Product Image</strong><br>
+              <small>Primary product photo</small>
+            </div>
+            <input type="file" id="mainImage" name="mainImage" accept="image/*">
+          </div>
+          
+          <div class="image-upload-card" onclick="document.getElementById('image2').click()">
+            <div class="image-preview" id="preview2">
+              <div class="upload-icon">🖼️</div>
+            </div>
+            <div class="upload-text">
+              <strong>Additional Image 1</strong><br>
+              <small>Side or detail view</small>
+            </div>
+            <input type="file" id="image2" name="productImage2" accept="image/*">
+          </div>
+          
+          <div class="image-upload-card" onclick="document.getElementById('image3').click()">
+            <div class="image-preview" id="preview3">
+              <div class="upload-icon">🖼️</div>
+            </div>
+            <div class="upload-text">
+              <strong>Additional Image 2</strong><br>
+              <small>Back or detail view</small>
+            </div>
+            <input type="file" id="image3" name="productImage3" accept="image/*">
+          </div>
+          
+          <div class="image-upload-card" onclick="document.getElementById('image4').click()">
+            <div class="image-preview" id="preview4">
+              <div class="upload-icon">🖼️</div>
+            </div>
+            <div class="upload-text">
+              <strong>Lifestyle Image</strong><br>
+              <small>Product in use</small>
+            </div>
+            <input type="file" id="image4" name="lifestyleImage" accept="image/*">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing & Inventory -->
+      <div class="form-section">
+        <h3>Pricing & Inventory</h3>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="regularPrice">Regular Price <span class="required">*</span></label>
+            <div class="price-input">
+              <input type="number" id="regularPrice" name="regularPrice" required placeholder="99.99" step="0.01">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="salePrice">Sale Price</label>
+            <div class="price-input">
+              <input type="number" id="salePrice" name="salePrice" placeholder="79.99" step="0.01">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="costPrice">Cost Price</label>
+            <div class="price-input">
+              <input type="number" id="costPrice" name="costPrice" placeholder="45.00" step="0.01">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sku">SKU</label>
+            <input type="text" id="sku" name="sku" placeholder="TBH100-BLK">
+          </div>
+          <div class="form-group">
+            <label for="stockQuantity">Stock Quantity</label>
+            <input type="number" id="stockQuantity" name="stockQuantity" placeholder="100" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories & Tags -->
+      <div class="form-section">
+        <h3>Categories & Tags</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <option value="">Select Category</option>
+              <option value="electronics">Electronics</option>
+              <option value="audio">Audio</option>
+              <option value="headphones">Headphones</option>
+              <option value="accessories">Accessories</option>
+              <option value="gaming">Gaming</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="subcategory">Subcategory</label>
+            <select id="subcategory" name="subcategory">
+              <option value="">Select Subcategory</option>
+              <option value="wireless">Wireless</option>
+              <option value="wired">Wired</option>
+              <option value="gaming">Gaming</option>
+              <option value="studio">Studio</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tags">Tags (comma-separated)</label>
+          <input type="text" id="tags" name="tags" placeholder="wireless, bluetooth, noise-canceling, premium">
+        </div>
+      </div>
+
+      <!-- Product Variants -->
+      <div class="form-section">
+        <h3>Product Variants</h3>
+        <div class="variant-section">
+          <div class="variant-header">
+            <h4 class="variant-title">Variant 1 - Black</h4>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="variant1Color">Color</label>
+              <input type="text" id="variant1Color" name="variant1Color" placeholder="Black">
+            </div>
+            <div class="form-group">
+              <label for="variant1Size">Size</label>
+              <input type="text" id="variant1Size" name="variant1Size" placeholder="Standard">
+            </div>
+            <div class="form-group">
+              <label for="variant1Price">Price</label>
+              <div class="price-input">
+                <input type="number" id="variant1Price" name="variant1Price" placeholder="99.99" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="variant1Image">Variant Image</label>
+            <input type="file" id="variant1Image" name="variant1Image" accept="image/*">
+          </div>
+        </div>
+
+        <div class="variant-section">
+          <div class="variant-header">
+            <h4 class="variant-title">Variant 2 - White</h4>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="variant2Color">Color</label>
+              <input type="text" id="variant2Color" name="variant2Color" placeholder="White">
+            </div>
+            <div class="form-group">
+              <label for="variant2Size">Size</label>
+              <input type="text" id="variant2Size" name="variant2Size" placeholder="Standard">
+            </div>
+            <div class="form-group">
+              <label for="variant2Price">Price</label>
+              <div class="price-input">
+                <input type="number" id="variant2Price" name="variant2Price" placeholder="99.99" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="variant2Image">Variant Image</label>
+            <input type="file" id="variant2Image" name="variant2Image" accept="image/*">
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO & Marketing -->
+      <div class="form-section">
+        <h3>SEO & Marketing</h3>
+        <div class="form-group">
+          <label for="metaTitle">Meta Title</label>
+          <input type="text" id="metaTitle" name="metaTitle" placeholder="Amazing Wireless Headphones - Premium Audio">
+        </div>
+        <div class="form-group">
+          <label for="metaDescription">Meta Description</label>
+          <textarea id="metaDescription" name="metaDescription" placeholder="Discover premium wireless headphones with noise cancellation..." rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="slug">URL Slug</label>
+            <input type="text" id="slug" name="slug" placeholder="amazing-wireless-headphones">
+          </div>
+          <div class="form-group">
+            <label for="productCondition">Condition</label>
+            <select id="productCondition" name="condition">
+              <option value="new">New</option>
+              <option value="refurbished">Refurbished</option>
+              <option value="used">Used</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">Create Product</button>
+    </form>
+  </div>
+
+  <script>
+    // Handle image uploads with previews
+    const imageInputs = ['mainImage', 'image2', 'image3', 'image4'];
+    const previews = ['mainPreview', 'preview2', 'preview3', 'preview4'];
+
+    imageInputs.forEach((inputId, index) => {
+      document.getElementById(inputId).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById(previews[index]).innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // Handle form submission
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Product created! (This is just a test)');
+    });
+
+    // Monitor Fillo activity
+    document.addEventListener('fillo:fields-changed', (event) => {
+      console.log('Fillo detected e-commerce fields:', event.detail.fields);
+      
+      // Count different field types
+      const fieldTypes = {};
+      event.detail.fields.forEach(field => {
+        fieldTypes[field.type] = (fieldTypes[field.type] || 0) + 1;
+      });
+      
+      console.log('E-commerce field type distribution:', fieldTypes);
+      
+      // Log image fields specifically
+      const imageFields = event.detail.fields.filter(f => f.type === 'image' || f.type === 'file');
+      console.log(`Image upload fields detected: ${imageFields.length}`);
+      imageFields.forEach(field => {
+        console.log(`- ${field.label} (${field.signature})`);
+      });
+    });
+
+    // Track button additions
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fillo-field-button')) {
+            const isImageButton = node.innerHTML.includes('🖼️');
+            console.log(`Fillo button added - ${isImageButton ? 'Image generator' : 'Text generator'}`);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  </script>
+</body>
+</html>

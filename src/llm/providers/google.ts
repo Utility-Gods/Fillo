@@ -44,7 +44,7 @@ export class GoogleProvider extends BaseLLMProvider {
   }
 
   async generateContent(request: LLMRequest): Promise<string> {
-    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context);
+    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context, request.pageContext);
     
     const response = await this.makeRequest(
       `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,

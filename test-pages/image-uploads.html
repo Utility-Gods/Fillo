@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload Fields Test - Fillo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .form-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .form-section h2 {
+      margin-top: 0;
+      color: #007bff;
+      font-size: 1.2em;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    input[type="file"]:hover {
+      border-color: #007bff;
+    }
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      cursor: pointer;
+      width: 100%;
+    }
+    .file-input-styled {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .file-input-styled:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
+    }
+    .file-input-styled svg {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    .code-snippet {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+    .preview-area {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+    }
+    .preview-area img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to Test Pages</a>
+  <h1>Image Upload Fields Test</h1>
+  <p>Test various file upload configurations to ensure Fillo detects and adds generator buttons.</p>
+
+  <form>
+    <!-- Test Case 1: Your exact input -->
+    <div class="form-section">
+      <h2>Test Case 1: Your Exact Input</h2>
+      <p>This is the exact input element you provided.</p>
+      <div class="form-group">
+        <label for="coverImage1">Cover Image</label>
+        <div class="file-input-wrapper" style="position: relative;">
+          <div class="file-input-styled">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <span>Choose cover image</span>
+          </div>
+          <input id="coverImage1" name="coverImage" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="handleCoverImageSelect(event)">
+        </div>
+        <div class="preview-area" id="preview1">
+          <span>No image selected</span>
+        </div>
+        <div class="code-snippet">
+          &lt;input id="coverImage1" name="coverImage" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="handleCoverImageSelect(event)"&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Case 2: Basic file input -->
+    <div class="form-section">
+      <h2>Test Case 2: Basic File Input</h2>
+      <div class="form-group">
+        <label for="basicImage">Basic Image Upload</label>
+        <input type="file" id="basicImage" name="basicImage" accept="image/*">
+        <div class="preview-area" id="preview2">
+          <span>No image selected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Case 3: Multiple image types -->
+    <div class="form-section">
+      <h2>Test Case 3: Specific Image Types</h2>
+      <div class="form-group">
+        <label for="jpegOnly">JPEG Only</label>
+        <input type="file" id="jpegOnly" name="jpegOnly" accept="image/jpeg">
+      </div>
+      <div class="form-group">
+        <label for="pngOnly">PNG Only</label>
+        <input type="file" id="pngOnly" name="pngOnly" accept="image/png">
+      </div>
+      <div class="form-group">
+        <label for="multipleTypes">Multiple Image Types</label>
+        <input type="file" id="multipleTypes" name="multipleTypes" accept="image/jpeg,image/png,image/gif,image/webp">
+      </div>
+    </div>
+
+    <!-- Test Case 4: Profile and avatar uploads -->
+    <div class="form-section">
+      <h2>Test Case 4: Profile/Avatar Fields</h2>
+      <div class="form-group">
+        <label for="profilePicture">Profile Picture</label>
+        <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label for="avatar">Avatar</label>
+        <input type="file" id="avatar" name="avatar" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label for="userPhoto">User Photo</label>
+        <input type="file" id="userPhoto" name="userPhoto" accept="image/*">
+      </div>
+    </div>
+
+    <!-- Test Case 5: Multiple files -->
+    <div class="form-section">
+      <h2>Test Case 5: Multiple File Selection</h2>
+      <div class="form-group">
+        <label for="multipleImages">Multiple Images</label>
+        <input type="file" id="multipleImages" name="multipleImages" accept="image/*" multiple>
+      </div>
+    </div>
+
+    <!-- Test Case 6: Non-image file inputs (should not show generator) -->
+    <div class="form-section">
+      <h2>Test Case 6: Non-Image Files (No Generator Expected)</h2>
+      <div class="form-group">
+        <label for="pdfFile">PDF Document</label>
+        <input type="file" id="pdfFile" name="pdfFile" accept="application/pdf">
+      </div>
+      <div class="form-group">
+        <label for="anyFile">Any File Type</label>
+        <input type="file" id="anyFile" name="anyFile">
+      </div>
+    </div>
+  </form>
+
+  <script>
+    // Handle file selection for preview
+    function handleCoverImageSelect(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('preview1').innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Add preview functionality to other inputs
+    document.getElementById('basicImage').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('preview2').innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Log when Fillo buttons are added
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fillo-field-button')) {
+            console.log('Fillo button added for field:', node.previousElementSibling);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  </script>
+</body>
+</html>

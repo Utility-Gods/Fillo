@@ -1,9 +1,11 @@
 import { FieldInfo } from '../../types';
+import { PageContext } from '../../utils/context-extractor';
 
 export interface LLMRequest {
   fieldInfo: FieldInfo;
   creativityLevel: number;
   context?: string;
+  pageContext?: PageContext;
 }
 
 export interface LLMResponse {
@@ -30,24 +32,49 @@ export abstract class BaseLLMProvider {
   abstract testConnection(): Promise<boolean>;
   abstract generateContent(request: LLMRequest): Promise<string>;
 
-  protected buildPrompt(fieldInfo: FieldInfo, creativityLevel: number, context?: string): string {
+  protected buildPrompt(fieldInfo: FieldInfo, creativityLevel: number, context?: string, pageContext?: PageContext): string {
     const creativityDescription = this.getCreativityDescription(creativityLevel);
+    
+    let contextualInfo = '';
+    
+    if (pageContext) {
+      contextualInfo += `\nPage Context:`;
+      contextualInfo += `\n- Page Title: ${pageContext.title}`;
+      contextualInfo += `\n- URL: ${pageContext.url}`;
+      
+      if (pageContext.description) {
+        contextualInfo += `\n- Description: ${pageContext.description}`;
+      }
+      
+      if (pageContext.formPurpose) {
+        contextualInfo += `\n- Form Purpose: ${pageContext.formPurpose}`;
+      }
+      
+      if (pageContext.parentElements.length > 0) {
+        contextualInfo += `\n- Form Structure: ${pageContext.parentElements.slice(0, 3).join(', ')}`;
+      }
+      
+      if (pageContext.nearbyText) {
+        contextualInfo += `\n- Nearby Text: ${pageContext.nearbyText.substring(0, 200)}`;
+      }
+    }
     
     const basePrompt = `Generate appropriate content for a form field with the following details:
 
 Field Type: ${fieldInfo.type}
 Field Label: ${fieldInfo.label}
-Context: ${fieldInfo.context || 'general form'}
-${context ? `Additional Context: ${context}` : ''}
+Field Context: ${fieldInfo.context || 'general form'}
+${context ? `Additional Context: ${context}` : ''}${contextualInfo}
 
 Creativity Level: ${creativityDescription}
 
 Requirements:
-- Generate realistic, appropriate content for this field
-- Content should match the field type and context
+- Generate realistic, appropriate content for this specific field
+- Content should match the field type, form purpose, and page context
+- Consider the overall purpose of the form when generating content
 - ${creativityLevel < 0.5 ? 'Be conservative and predictable' : creativityLevel < 1.0 ? 'Balance realism with some variation' : 'Be creative while maintaining appropriateness'}
 - Return ONLY the content for the field, no explanations or quotes
-- Keep it concise and relevant
+- Keep it concise and relevant to the context
 
 Content:`;
 

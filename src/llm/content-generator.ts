@@ -2,6 +2,7 @@ import { FieldInfo, ProviderResponse } from '../types';
 import { CacheManager } from '../database/cache';
 import { ProviderManager } from './provider-manager';
 import { StorageManager } from '../storage/storage';
+import { ContextExtractor, PageContext } from '../utils/context-extractor';
 
 export class ContentGenerator {
   private static instance: ContentGenerator;
@@ -33,10 +34,11 @@ export class ContentGenerator {
     useCache?: boolean;
     context?: string;
     forceRegenerate?: boolean;
+    pageContext?: PageContext;
   }): Promise<ProviderResponse> {
     await this.initialize();
 
-    const { useCache = true, context, forceRegenerate = false } = options || {};
+    const { useCache = true, context, forceRegenerate = false, pageContext } = options || {};
 
     // Check cache first if enabled and not forcing regeneration
     if (useCache && !forceRegenerate) {
@@ -62,7 +64,7 @@ export class ContentGenerator {
     console.log('Generating new content for field:', fieldInfo.signature);
     
     try {
-      const response = await this.providerManager.generateContent(fieldInfo, context);
+      const response = await this.providerManager.generateContent(fieldInfo, context, pageContext);
       
       if (!response) {
         throw new Error('No response from provider');

@@ -29,6 +29,7 @@ if (typeof document === 'undefined') {
 import { StorageManager } from '../storage/storage';
 import { ProviderManager } from '../llm/provider-manager';
 import { ContentGenerator } from '../llm/content-generator';
+import { OpenAIImageGenerator } from '../llm/providers/openai-image';
 
 // Initialize on install
 chrome.runtime.onInstalled.addListener(() => {
@@ -97,6 +98,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'generateContent') {
     handleGenerateContent(request, sendResponse);
+    return true; // Will respond asynchronously
+  }
+
+  if (request.action === 'generateImage') {
+    handleGenerateImage(request, sendResponse);
     return true; // Will respond asynchronously
   }
 
@@ -197,6 +203,51 @@ async function handleGetCacheStats(sendResponse: Function) {
     sendResponse({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to get cache stats' 
+    });
+  }
+}
+
+async function handleGenerateImage(request: any, sendResponse: Function) {
+  try {
+    console.log('Background: Starting image generation for field:', request.fieldInfo);
+    
+    // Get the current provider settings
+    const storage = StorageManager.getInstance();
+    const settings = await storage.getSettings();
+    
+    // Check if we have OpenAI configured
+    const openaiKey = await storage.getApiKey('openai');
+    if (!openaiKey) {
+      throw new Error('OpenAI API key not configured. Please add it in settings.');
+    }
+
+    // Use the statically imported OpenAI image generator
+    const imageGenerator = new OpenAIImageGenerator(openaiKey);
+    
+    // Build prompt based on field info
+    const prompt = imageGenerator['buildPrompt'](request.fieldInfo, settings.creativityLevel);
+    
+    // Generate the image
+    const imageResponse = await imageGenerator.generateImage({
+      prompt,
+      size: request.options?.size || '1024x1024',
+      quality: request.options?.quality || 'standard',
+      creativity: settings.creativityLevel
+    });
+    
+    console.log('Background: Image generated successfully:', imageResponse);
+    sendResponse({ 
+      success: true, 
+      imageUrl: imageResponse.url,
+      prompt: imageResponse.prompt,
+      revisedPrompt: imageResponse.revised_prompt,
+      filename: `generated-${Date.now()}.png`
+    });
+  } catch (error) {
+    console.error('Background: Image generation failed:', error);
+    sendResponse({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to generate image' 
     });
   }
 }

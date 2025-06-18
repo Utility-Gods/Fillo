@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complex Forms Test - Fillo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .form-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .form-section.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-section h2 {
+      margin-top: 0;
+      color: #007bff;
+      font-size: 1.2em;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .file-upload-area {
+      position: relative;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: #fafafa;
+      transition: border-color 0.2s;
+    }
+    .file-upload-area:hover {
+      border-color: #007bff;
+    }
+    .file-upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-icon {
+      font-size: 48px;
+      color: #ddd;
+      margin-bottom: 10px;
+    }
+    .upload-text {
+      color: #666;
+      font-size: 14px;
+    }
+    @media (max-width: 768px) {
+      .form-container {
+        grid-template-columns: 1fr;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to Test Pages</a>
+  <h1>Complex Forms Test</h1>
+  <p>Test complex form layouts with mixed field types and your exact input structure.</p>
+
+  <form>
+    <div class="form-container">
+      <!-- Your Exact Cover Image Input -->
+      <div class="form-section full-width">
+        <h2>Your Exact Cover Image Input</h2>
+        <div class="form-group">
+          <label for="coverImageExact">Cover Image (Your Exact Code)</label>
+          <div class="file-upload-area">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">
+              <strong>Choose cover image</strong><br>
+              <small>Click to upload or drag and drop</small>
+            </div>
+            <input id="coverImageExact" name="coverImage" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="handleCoverImageSelect(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Information -->
+      <div class="form-section">
+        <h2>Personal Information</h2>
+        <div class="form-group">
+          <label for="displayName">Display Name</label>
+          <input type="text" id="displayName" name="displayName" placeholder="John Doe">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName2">First Name</label>
+            <input type="text" id="firstName2" name="firstName" placeholder="John">
+          </div>
+          <div class="form-group">
+            <label for="lastName2">Last Name</label>
+            <input type="text" id="lastName2" name="lastName" placeholder="Doe">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email2">Email</label>
+          <input type="email" id="email2" name="email" placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label for="bio2">Bio</label>
+          <textarea id="bio2" name="bio" placeholder="Tell us about yourself..."></textarea>
+        </div>
+      </div>
+
+      <!-- Profile Images -->
+      <div class="form-section">
+        <h2>Profile Images</h2>
+        <div class="form-group">
+          <label for="profilePic">Profile Picture</label>
+          <input type="file" id="profilePic" name="profilePicture" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="bannerImage">Banner Image</label>
+          <input type="file" id="bannerImage" name="bannerImage" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="avatar2">Avatar</label>
+          <input type="file" id="avatar2" name="avatar" accept="image/png,image/jpeg">
+        </div>
+      </div>
+
+      <!-- Company Details -->
+      <div class="form-section">
+        <h2>Company Details</h2>
+        <div class="form-group">
+          <label for="companyName2">Company Name</label>
+          <input type="text" id="companyName2" name="companyName" placeholder="Acme Corporation">
+        </div>
+        <div class="form-group">
+          <label for="position">Position</label>
+          <input type="text" id="position" name="position" placeholder="Software Engineer">
+        </div>
+        <div class="form-group">
+          <label for="department2">Department</label>
+          <select id="department2" name="department">
+            <option value="">Select Department</option>
+            <option value="engineering">Engineering</option>
+            <option value="marketing">Marketing</option>
+            <option value="sales">Sales</option>
+            <option value="hr">Human Resources</option>
+            <option value="finance">Finance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="companyDescription">Company Description</label>
+          <textarea id="companyDescription" name="companyDescription" placeholder="Brief description of your company..."></textarea>
+        </div>
+      </div>
+
+      <!-- Social Media -->
+      <div class="form-section">
+        <h2>Social Media</h2>
+        <div class="form-group">
+          <label for="twitter">Twitter Handle</label>
+          <input type="text" id="twitter" name="twitter" placeholder="@yourusername">
+        </div>
+        <div class="form-group">
+          <label for="linkedin">LinkedIn Profile</label>
+          <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourname">
+        </div>
+        <div class="form-group">
+          <label for="github">GitHub Profile</label>
+          <input type="url" id="github" name="github" placeholder="https://github.com/Utility-Gods">
+        </div>
+        <div class="form-group">
+          <label for="portfolio">Portfolio Website</label>
+          <input type="url" id="portfolio" name="portfolio" placeholder="https://yourportfolio.com">
+        </div>
+      </div>
+
+      <!-- Product Information -->
+      <div class="form-section full-width">
+        <h2>Product Information</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="productName">Product Name</label>
+            <input type="text" id="productName" name="productName" placeholder="Amazing Product">
+          </div>
+          <div class="form-group">
+            <label for="productPrice">Price</label>
+            <input type="number" id="productPrice" name="productPrice" placeholder="99.99" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="productDescription">Product Description</label>
+          <textarea id="productDescription" name="productDescription" placeholder="Detailed description of your product..." style="min-height: 120px;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="productImage1">Product Image 1</label>
+            <input type="file" id="productImage1" name="productImage1" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="productImage2">Product Image 2</label>
+            <input type="file" id="productImage2" name="productImage2" accept="image/*">
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    function handleCoverImageSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const uploadArea = event.target.closest('.file-upload-area');
+        const uploadText = uploadArea.querySelector('.upload-text');
+        uploadText.innerHTML = `<strong>Selected:</strong> ${file.name}<br><small>Click to change</small>`;
+        console.log('Cover image selected:', file.name);
+      }
+    }
+
+    // Monitor for Fillo buttons
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fillo-field-button')) {
+            console.log('Fillo button added to field:', node);
+            
+            // Find the associated input
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+              const rect = input.getBoundingClientRect();
+              const buttonRect = node.getBoundingClientRect();
+              
+              // Check if button is positioned near this input
+              if (Math.abs(buttonRect.left - rect.right) < 50 && 
+                  Math.abs(buttonRect.top - rect.top) < 50) {
+                console.log('Button associated with:', input.id || input.name, input.type);
+              }
+            });
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Listen for Fillo field detection events
+    document.addEventListener('fillo:fields-changed', (event) => {
+      console.log('Fillo detected fields:', event.detail.fields);
+      
+      // Log field types
+      event.detail.fields.forEach(field => {
+        console.log(`Field: ${field.label} (${field.type}) - ${field.signature}`);
+      });
+    });
+  </script>
+</body>
+</html>

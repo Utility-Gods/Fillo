@@ -10,5 +10,6 @@ export function isLocalhost(url?: string): boolean {
 }
 
 export function shouldActivate(): boolean {
-  return isLocalhost() && document.readyState === 'complete';
+  // Check if we're on localhost - don't require complete state since we init on DOMContentLoaded
+  return isLocalhost();
 }

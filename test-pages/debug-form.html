@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Form - Exact User Input</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .form-container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .relative {
+      position: relative;
+    }
+    .absolute {
+      position: absolute;
+    }
+    .inset-0 {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+    .w-full {
+      width: 100%;
+    }
+    .h-full {
+      height: 100%;
+    }
+    .opacity-0 {
+      opacity: 0;
+    }
+    .cursor-pointer {
+      cursor: pointer;
+    }
+    .mt-1 {
+      margin-top: 0.25rem;
+    }
+    .flex {
+      display: flex;
+    }
+    .justify-center {
+      justify-content: center;
+    }
+    .px-6 {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    .pt-5 {
+      padding-top: 1.25rem;
+    }
+    .pb-6 {
+      padding-bottom: 1.5rem;
+    }
+    .border-2 {
+      border-width: 2px;
+    }
+    .border-gray-300 {
+      border-color: #d1d5db;
+    }
+    .border-dashed {
+      border-style: dashed;
+    }
+    .rounded-md {
+      border-radius: 0.375rem;
+    }
+    .hover\:border-rose-500:hover {
+      border-color: #f43f5e;
+    }
+    .space-y-1 > * + * {
+      margin-top: 0.25rem;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .flex-col {
+      flex-direction: column;
+    }
+    .items-center {
+      align-items: center;
+    }
+    .text-sm {
+      font-size: 0.875rem;
+    }
+    .text-gray-600 {
+      color: #4b5563;
+    }
+    .text-xs {
+      font-size: 0.75rem;
+    }
+    .text-gray-500 {
+      color: #6b7280;
+    }
+    .block {
+      display: block;
+    }
+    .font-medium {
+      font-weight: 500;
+    }
+    .text-gray-700 {
+      color: #374151;
+    }
+    .debug-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f8ff;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .debug-log {
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #1a1a1a;
+      color: #00ff00;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to Test Pages</a>
+  <h1>Debug Form - Your Exact Input Structure</h1>
+  <p>This reproduces your exact HTML structure to debug the Fillo detection issue.</p>
+
+  <div class="form-container">
+    <form id="catalogueCreateForm" class="space-y-4">
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700">Catalogue Name</label>
+        <input type="text" id="name" name="name" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter catalogue name">
+      </div>
+
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+        <textarea id="description" name="description" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter catalogue description"></textarea>
+      </div>
+
+      <!-- YOUR EXACT COVER IMAGE STRUCTURE -->
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700">Cover Image</label>
+        <div class="mt-1 flex items-center">
+          <div class="grow">
+            <label for="coverImage1" class="cursor-pointer w-full">
+              <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-rose-500">
+                <div class="space-y-1 text-center flex flex-col items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                    <path d="M7 9l5 -5l5 5"></path>
+                    <path d="M12 4l0 12"></path>
+                  </svg>
+                  <div class="flex text-sm text-gray-600">
+                    <span>Upload a cover image</span>
+                    <!-- THIS IS YOUR EXACT INPUT -->
+                    <input id="coverImage1" name="coverImage" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="handleCoverImageSelect(event)">
+                  </div>
+                  <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label for="visibility" class="block text-sm font-medium text-gray-700">Visibility</label>
+        <select id="visibility" name="visibility" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+          <option value="private">Private</option>
+          <option value="public">Public</option>
+        </select>
+      </div>
+    </form>
+
+    <div class="debug-info">
+      <strong>Debug Information:</strong><br>
+      File Input ID: coverImage1<br>
+      File Input Classes: absolute inset-0 w-full h-full opacity-0 cursor-pointer<br>
+      Accept: image/*<br>
+      <div id="detectionStatus">Status: Waiting for Fillo...</div>
+    </div>
+
+    <div class="debug-log" id="debugLog">
+      <div>Debug log (check for Fillo events):</div>
+    </div>
+  </div>
+
+  <script>
+    function handleCoverImageSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        addToLog(`File selected: ${file.name} (${file.type})`);
+      }
+    }
+
+    function addToLog(message) {
+      const log = document.getElementById('debugLog');
+      const time = new Date().toLocaleTimeString();
+      log.innerHTML += `<div>[${time}] ${message}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Debug: Check if input is being detected
+    setTimeout(() => {
+      const input = document.getElementById('coverImage1');
+      const rect = input.getBoundingClientRect();
+      const style = window.getComputedStyle(input);
+      
+      addToLog(`Input element found: ${!!input}`);
+      addToLog(`Input type: ${input.type}`);
+      addToLog(`Input accept: ${input.accept}`);
+      addToLog(`Input opacity: ${style.opacity}`);
+      addToLog(`Input display: ${style.display}`);
+      addToLog(`Input visibility: ${style.visibility}`);
+      addToLog(`Input dimensions: ${rect.width}x${rect.height}`);
+      addToLog(`Input position: ${rect.left}, ${rect.top}`);
+    }, 1000);
+
+    // Listen for Fillo events
+    document.addEventListener('fillo:fields-changed', (event) => {
+      const fields = event.detail.fields;
+      addToLog(`🎉 Fillo detected ${fields.length} fields!`);
+      
+      fields.forEach((field, index) => {
+        addToLog(`Field ${index + 1}: ${field.type} - "${field.label}" (${field.signature})`);
+      });
+      
+      const imageFields = fields.filter(f => f.type === 'image' || f.type === 'file');
+      if (imageFields.length > 0) {
+        document.getElementById('detectionStatus').innerHTML = '✅ Status: Image field detected!';
+        document.getElementById('detectionStatus').style.color = 'green';
+      } else {
+        document.getElementById('detectionStatus').innerHTML = '❌ Status: No image fields detected';
+        document.getElementById('detectionStatus').style.color = 'red';
+      }
+    });
+
+    // Monitor for button additions
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fillo-field-button')) {
+            const isImageButton = node.innerHTML.includes('🖼️');
+            addToLog(`🔘 Fillo button added: ${isImageButton ? 'Image button (🖼️)' : 'Text button (✨)'}`);
+            addToLog(`Button position: left=${node.style.left}, top=${node.style.top}`);
+            
+            if (isImageButton) {
+              document.getElementById('detectionStatus').innerHTML = '🎯 Status: Image button added!';
+              document.getElementById('detectionStatus').style.color = 'blue';
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Check content script loading
+    addToLog('Page loaded, waiting for Fillo content script...');
+    
+    // Check for any errors
+    window.addEventListener('error', (e) => {
+      addToLog(`❌ Error: ${e.message}`);
+    });
+
+    // Check extension context
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      addToLog('✅ Chrome extension context available');
+    } else {
+      addToLog('❌ No Chrome extension context');
+    }
+  </script>
+</body>
+</html>
