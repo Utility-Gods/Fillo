@@ -43,7 +43,10 @@ const Options: Component = () => {
   return (
     <div class="options-container">
       <header class="header">
-        <h1>Fillo Settings</h1>
+        <div class="header-content">
+          <img src="/public/icons/icon48.png" alt="Fillo" class="logo" />
+          <h1>Fillo Settings</h1>
+        </div>
         <p>Configure your intelligent form filler</p>
       </header>
 

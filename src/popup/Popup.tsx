@@ -92,7 +92,10 @@ const Popup: Component = () => {
   return (
     <div class="popup-container">
       <div class="header">
-        <h1>Fillo</h1>
+        <div class="header-content">
+          <img src="/public/icons/icon48.png" alt="Fillo" class="logo" />
+          <h1>Fillo</h1>
+        </div>
         <p class="subtitle">Intelligent Form Filler</p>
       </div>
       

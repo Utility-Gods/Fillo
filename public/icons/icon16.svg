@@ -1,0 +1,25 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E57341;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4622A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rounded square -->
+  <rect x="1" y="1" width="14" height="14" rx="3" fill="url(#gradient)"/>
+  
+  <!-- Form document background -->
+  <rect x="3.5" y="3" width="9" height="10" rx="1" fill="white" opacity="0.2"/>
+  
+  <!-- Form lines -->
+  <rect x="4.5" y="4.5" width="5" height="0.8" rx="0.4" fill="white" opacity="0.9"/>
+  <rect x="4.5" y="6.5" width="4" height="0.8" rx="0.4" fill="white" opacity="0.8"/>
+  <rect x="4.5" y="8.5" width="4.5" height="0.8" rx="0.4" fill="white" opacity="0.7"/>
+  <rect x="4.5" y="10.5" width="3.5" height="0.8" rx="0.4" fill="white" opacity="0.6"/>
+  
+  <!-- AI magic wand/pen -->
+  <circle cx="11" cy="5" r="0.8" fill="#FFE4B5"/>
+  <rect x="10.6" y="4.4" width="0.8" height="1.2" rx="0.4" fill="#FFE4B5"/>
+  <rect x="10.2" y="4.6" width="1.6" height="0.8" rx="0.4" fill="#FFE4B5"/>
+</svg>
