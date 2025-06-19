@@ -38,35 +38,67 @@ export class ContentGenerator {
     context?: string;
     forceRegenerate?: boolean;
     pageContext?: PageContext;
+    returnMultiple?: boolean;
+    varyCreativity?: boolean;
   }): Promise<ProviderResponse> {
     await this.initialize();
 
-    const { useCache = true, context, forceRegenerate = false, pageContext } = options || {};
+    const { useCache = true, context, forceRegenerate = false, pageContext, returnMultiple = false, varyCreativity = false } = options || {};
 
     // Check cache first if enabled and not forcing regeneration
     if (useCache && !forceRegenerate) {
       const settings = await this.getSettings();
       if (settings?.cache.enabled) {
         const creativityLevel = await this.getCreativityLevel(fieldInfo.type);
-        const cached = await this.cacheManager.get(fieldInfo.signature, creativityLevel);
         
-        if (cached) {
-          console.log('Cache hit for field:', fieldInfo.signature);
+        if (returnMultiple) {
+          // Get multiple cached entries and return a random one
+          const cachedEntries = await this.cacheManager.getMultiple(fieldInfo.signature, creativityLevel, 5);
           
-          // Still add cached content to history so we can avoid regenerating it
-          this.generationHistory.addEntry(
-            fieldInfo.signature, 
-            cached.generatedContent, 
-            cached.provider || 'unknown'
-          );
+          if (cachedEntries.length > 0) {
+            // Pick a random cached entry
+            const randomIndex = Math.floor(Math.random() * cachedEntries.length);
+            const cached = cachedEntries[randomIndex];
+            
+            console.log(`Cache hit for field: ${fieldInfo.signature} (${cachedEntries.length} entries available)`);
+            
+            // Still add cached content to history so we can avoid regenerating it
+            this.generationHistory.addEntry(
+              fieldInfo.signature, 
+              cached.generatedContent, 
+              cached.provider || 'unknown'
+            );
+            
+            return {
+              content: cached.generatedContent,
+              cached: true,
+              provider: cached.provider || 'unknown',
+              model: cached.model || 'unknown',
+              creativityLevel: cached.creativityLevel
+            };
+          }
+        } else {
+          // Original behavior - get single entry
+          const cached = await this.cacheManager.get(fieldInfo.signature, creativityLevel);
           
-          return {
-            content: cached.generatedContent,
-            cached: true,
-            provider: cached.provider || 'unknown',
-            model: cached.model || 'unknown',
-            creativityLevel: cached.creativityLevel
-          };
+          if (cached) {
+            console.log('Cache hit for field:', fieldInfo.signature);
+            
+            // Still add cached content to history so we can avoid regenerating it
+            this.generationHistory.addEntry(
+              fieldInfo.signature, 
+              cached.generatedContent, 
+              cached.provider || 'unknown'
+            );
+            
+            return {
+              content: cached.generatedContent,
+              cached: true,
+              provider: cached.provider || 'unknown',
+              model: cached.model || 'unknown',
+              creativityLevel: cached.creativityLevel
+            };
+          }
         }
       }
     }

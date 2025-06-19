@@ -33,6 +33,26 @@ export class CacheManager {
     return null;
   }
 
+  async getMultiple(signature: string, creativityLevel: number, limit: number = 3): Promise<CacheEntry[]> {
+    const tolerance = 0.2; // Allow wider tolerance for multiple entries
+    
+    const results = await this.db.getAllBySignature(signature, creativityLevel, tolerance, limit);
+    
+    if (results.length > 0) {
+      await this.incrementStats('hits');
+      
+      // Shuffle the results to provide variety
+      for (let i = results.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [results[i], results[j]] = [results[j], results[i]];
+      }
+    } else {
+      await this.incrementStats('misses');
+    }
+    
+    return results;
+  }
+
   async set(
     signature: string,
     fieldType: string,

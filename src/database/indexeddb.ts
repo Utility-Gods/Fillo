@@ -114,6 +114,46 @@ export class IndexedDBManager {
     });
   }
 
+  async getAllBySignature(signature: string, creativityLevel: number, tolerance: number = 0.2, limit: number = 5): Promise<CacheEntry[]> {
+    if (!this.db) await this.initialize();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([this.storeName], 'readonly');
+      const store = transaction.objectStore(this.storeName);
+      const index = store.index('signature');
+      const request = index.getAll(signature);
+
+      request.onsuccess = () => {
+        const entries = request.result as CacheEntry[];
+        
+        // Filter by creativity level tolerance and expiration
+        const now = new Date().toISOString();
+        const validEntries = entries.filter(entry => 
+          Math.abs(entry.creativityLevel - creativityLevel) <= tolerance &&
+          entry.expiresAt > now
+        );
+
+        // Remove duplicate content
+        const uniqueEntries = validEntries.reduce((acc, entry) => {
+          const isDuplicate = acc.some(e => e.generatedContent === entry.generatedContent);
+          if (!isDuplicate) {
+            acc.push(entry);
+          }
+          return acc;
+        }, [] as CacheEntry[]);
+
+        // Sort by creation date (newest first) to get variety
+        uniqueEntries.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        resolve(uniqueEntries.slice(0, limit));
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async getSimilar(signature: string, creativityLevel: number, limit: number = 3): Promise<CacheEntry[]> {
     if (!this.db) await this.initialize();
 

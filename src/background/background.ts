@@ -148,9 +148,16 @@ async function handleGenerateContent(request: any, sendResponse: Function) {
     
     // Test if the issue occurs during content generation
     console.log('Background: About to generate content...');
+    
+    // Update options to enable multiple cache retrieval for initial suggestions
+    const updatedOptions = {
+      ...request.options,
+      returnMultiple: !request.options?.forceRegenerate // Use multiple cache entries unless forcing regeneration
+    };
+    
     const response = await contentGenerator.generateForField(
       request.fieldInfo,
-      request.options
+      updatedOptions
     );
     
     console.log('Background: Content generated successfully:', response);
