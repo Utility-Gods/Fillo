@@ -30,7 +30,7 @@ export class FormDetector {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
-            if (this.isFormField(element) || element.querySelector('input, textarea, select')) {
+            if (this.isFormField(element) || element.querySelector('input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="url"], input[type="tel"], input[type="number"], input[type="file"], input:not([type]), textarea, select')) {
               shouldRedetect = true;
               break;
             }
@@ -45,7 +45,8 @@ export class FormDetector {
   }
 
   private detectFields(): void {
-    const formFields = document.querySelectorAll('input, textarea, select');
+    // Only query for actual form input elements, exclude buttons and links
+    const formFields = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="url"], input[type="tel"], input[type="number"], input[type="file"], input:not([type]), textarea, select');
     this.fields = [];
 
     formFields.forEach(field => {
@@ -67,8 +68,16 @@ export class FormDetector {
     if (element.tagName === 'INPUT') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      return ['text', 'email', 'password', 'search', 'url', 'tel', 'number', 'file'].includes(type);
+      // Explicitly exclude button types and only include text-like inputs and file inputs
+      const allowedTypes = ['text', 'email', 'password', 'search', 'url', 'tel', 'number', 'file'];
+      const excludedTypes = ['button', 'submit', 'reset', 'image', 'checkbox', 'radio', 'hidden', 'range', 'color', 'date', 'datetime-local', 'month', 'time', 'week'];
+      
+      return allowedTypes.includes(type) && !excludedTypes.includes(type);
     }
+
+    // Exclude button and link elements
+    if (element.tagName === 'BUTTON') return false;
+    if (element.tagName === 'A') return false;
 
     return false;
   }
@@ -76,12 +85,13 @@ export class FormDetector {
   private isVisible(element: Element): boolean {
     const style = window.getComputedStyle(element);
     
-    // For file inputs, opacity: 0 is commonly used for custom styling
-    // We should still consider them visible if they're not display:none or visibility:hidden
+    // For file inputs, they're often hidden for custom styling
+    // We should include them if they have an associated label or are in a form
     const isFileInput = element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'file';
     
     if (isFileInput) {
-      return style.display !== 'none' && style.visibility !== 'hidden';
+      // Always include file inputs, even if hidden - the overlay manager will handle positioning
+      return true;
     }
     
     return style.display !== 'none' && 

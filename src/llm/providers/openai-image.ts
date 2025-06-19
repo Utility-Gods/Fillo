@@ -44,6 +44,17 @@ export class OpenAIImageGenerator extends BaseImageGenerator {
     const size = request.size || 'auto';
     const quality = request.quality || 'auto';
     
+    // Log the image generation prompt
+    console.log('=== IMAGE GENERATION PROMPT ===');
+    console.log(`Provider: OpenAI (DALL-E)`);
+    console.log(`Model: ${this.model}`);
+    console.log(`Size: ${size}`);
+    console.log(`Quality: ${quality}`);
+    console.log(`Creativity: ${request.creativity || 'default'}`);
+    console.log('Full Prompt:');
+    console.log(request.prompt);
+    console.log('=== END IMAGE PROMPT ===');
+    
     const requestBody: any = {
       model: this.model, // gpt-image-1
       prompt: request.prompt,
@@ -110,41 +121,117 @@ export class OpenAIImageGenerator extends BaseImageGenerator {
     await this.setFileToInput(file, input);
   }
 
-  protected buildPrompt(fieldInfo: any, creativity: number): string {
+  protected buildPrompt(fieldInfo: any, creativity: number, previousPrompts?: string[]): string {
     const label = fieldInfo.label || '';
     const context = fieldInfo.context || '';
+    const pageContext = fieldInfo.pageContext;
     
-    let basePrompt = 'Generate a high-quality image';
+    let basePrompt = 'Generate a professional, high-quality image without any text or words';
+    let contextType = '';
+    let visualStyle = '';
     
-    // Determine the type of image based on field context
-    if (label.toLowerCase().includes('profile') || label.toLowerCase().includes('avatar')) {
-      basePrompt = 'Generate a professional profile picture or avatar';
-    } else if (label.toLowerCase().includes('logo') || label.toLowerCase().includes('brand')) {
-      basePrompt = 'Generate a clean, professional logo';
-    } else if (label.toLowerCase().includes('banner') || label.toLowerCase().includes('header')) {
-      basePrompt = 'Generate a banner or header image';
-    } else if (label.toLowerCase().includes('product')) {
-      basePrompt = 'Generate a product image';
-    } else if (label.toLowerCase().includes('background')) {
-      basePrompt = 'Generate a background image';
-    } else if (context.includes('contact') || context.includes('about')) {
-      basePrompt = 'Generate a professional image suitable for a contact or about page';
-    } else if (context.includes('portfolio') || context.includes('gallery')) {
-      basePrompt = 'Generate an artistic or creative image for a portfolio';
+    // Extract relevant context from page to determine image type, not content
+    if (pageContext) {
+      // Determine the general purpose without using specific text
+      if (pageContext.formPurpose) {
+        switch (pageContext.formPurpose) {
+          case 'registration':
+          case 'login':
+            contextType = 'suitable for user authentication';
+            break;
+          case 'contact':
+            contextType = 'suitable for business communication';
+            break;
+          case 'checkout':
+          case 'purchase':
+            contextType = 'suitable for e-commerce';
+            break;
+          case 'profile':
+            contextType = 'suitable for user profiles';
+            break;
+          default:
+            contextType = `suitable for ${pageContext.formPurpose}`;
+        }
+      }
+      
+      // Look at form fields to infer theme, not to add text
+      if (pageContext.formFields && pageContext.formFields.length > 0) {
+        const hasProductFields = pageContext.formFields.some((f: any) => 
+          f.label?.toLowerCase().includes('product') || 
+          f.label?.toLowerCase().includes('catalog')
+        );
+        const hasUserFields = pageContext.formFields.some((f: any) => 
+          f.label?.toLowerCase().includes('name') || 
+          f.label?.toLowerCase().includes('email')
+        );
+        
+        if (hasProductFields) {
+          visualStyle = 'modern, clean, professional product imagery';
+        } else if (hasUserFields) {
+          visualStyle = 'friendly, professional, people-oriented';
+        }
+      }
+    }
+    
+    // Determine the type of image based on field context and label
+    const labelLower = label.toLowerCase();
+    const contextLower = context.toLowerCase();
+    
+    if (labelLower.includes('profile') || labelLower.includes('avatar')) {
+      basePrompt = 'Generate a professional headshot or avatar photo, no text, just the person';
+    } else if (labelLower.includes('logo')) {
+      basePrompt = 'Generate an abstract logo design with geometric shapes or symbols, no text or letters';
+    } else if (labelLower.includes('banner') || labelLower.includes('header')) {
+      basePrompt = 'Generate a visually appealing banner image with abstract patterns or nature scenes, no text';
+    } else if (labelLower.includes('cover') || labelLower.includes('hero')) {
+      basePrompt = 'Generate an inspiring cover image with beautiful scenery or abstract art, no text';
+    } else if (labelLower.includes('product') || labelLower.includes('catalog') || labelLower.includes('catalogue')) {
+      basePrompt = 'Generate a product photography style image showing elegant items or objects, no text';
+    } else if (labelLower.includes('thumbnail')) {
+      basePrompt = 'Generate a compelling thumbnail image with vibrant visuals, no text';
+    } else if (labelLower.includes('background')) {
+      basePrompt = 'Generate a subtle background pattern or texture, no text';
+    } else if (contextType.includes('authentication')) {
+      basePrompt = 'Generate a secure, professional image with abstract security concepts, no text';
+    } else if (contextType.includes('e-commerce')) {
+      basePrompt = 'Generate a shopping or retail themed image with products or shopping concepts, no text';
+    } else if (contextType.includes('communication')) {
+      basePrompt = 'Generate a professional business communication themed image, no text';
     }
 
     // Add creativity modifiers
     let styleModifier = '';
     if (creativity < 0.3) {
-      styleModifier = ', simple and clean style, minimal design';
+      styleModifier = ', simple and clean style, minimal design, subtle colors';
     } else if (creativity < 0.7) {
-      styleModifier = ', professional and polished style';
+      styleModifier = ', professional and polished style, modern design';
     } else if (creativity < 1.2) {
-      styleModifier = ', creative and artistic style';
+      styleModifier = ', creative and artistic style, vibrant colors';
     } else {
-      styleModifier = ', highly creative and experimental style, unique artistic approach';
+      styleModifier = ', highly creative and experimental style, unique artistic approach, bold and dynamic';
     }
 
-    return `${basePrompt}${styleModifier}. ${label ? `For: ${label}` : ''}${context ? ` Context: ${context}` : ''}`;
+    // Build the final prompt
+    let finalPrompt = `${basePrompt}${styleModifier}`;
+    
+    // Add visual style if determined
+    if (visualStyle) {
+      finalPrompt += `. Visual style: ${visualStyle}`;
+    }
+    
+    // Add context type if available
+    if (contextType) {
+      finalPrompt += `, ${contextType}`;
+    }
+    
+    // Make it appropriate for web use
+    finalPrompt += '. The image should be suitable for web use, with good contrast and clarity. IMPORTANT: Do not include any text, words, letters, or numbers in the image. Focus on visual elements only.';
+    
+    // Add previous prompts if any to avoid repetition
+    if (previousPrompts && previousPrompts.length > 0) {
+      finalPrompt += `\n\nIMPORTANT: The following image descriptions have already been generated. Create something DIFFERENT:\n${previousPrompts.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nGenerate a completely different style and composition.`;
+    }
+    
+    return finalPrompt;
   }
 }

@@ -6,6 +6,7 @@ export interface LLMRequest {
   creativityLevel: number;
   context?: string;
   pageContext?: PageContext;
+  previousGenerations?: string[];
 }
 
 export interface LLMResponse {
@@ -32,7 +33,7 @@ export abstract class BaseLLMProvider {
   abstract testConnection(): Promise<boolean>;
   abstract generateContent(request: LLMRequest): Promise<string>;
 
-  protected buildPrompt(fieldInfo: FieldInfo, creativityLevel: number, context?: string, pageContext?: PageContext): string {
+  protected buildPrompt(fieldInfo: FieldInfo, creativityLevel: number, context?: string, pageContext?: PageContext, previousGenerations?: string[]): string {
     const creativityDescription = this.getCreativityDescription(creativityLevel);
     
     let contextualInfo = '';
@@ -57,6 +58,25 @@ export abstract class BaseLLMProvider {
       if (pageContext.nearbyText) {
         contextualInfo += `\n- Nearby Text: ${pageContext.nearbyText.substring(0, 200)}`;
       }
+      
+      // Add form field context to understand relationships
+      if (pageContext.formFields && pageContext.formFields.length > 0) {
+        const relevantFields = pageContext.formFields
+          .filter(f => f.value) // Only include filled fields
+          .slice(0, 5); // Limit to 5 most relevant fields
+        
+        if (relevantFields.length > 0) {
+          contextualInfo += `\n\nOther Form Fields (for context):`;
+          relevantFields.forEach(field => {
+            contextualInfo += `\n- ${field.label || field.name}: ${field.value}`;
+          });
+        }
+      }
+      
+      // Add form HTML structure for better understanding
+      if (pageContext.formHTML) {
+        contextualInfo += `\n\nForm Structure Preview:\n${pageContext.formHTML.substring(0, 500)}...`;
+      }
     }
     
     const basePrompt = `Generate appropriate content for a form field with the following details:
@@ -74,7 +94,12 @@ Requirements:
 - Consider the overall purpose of the form when generating content
 - ${creativityLevel < 0.5 ? 'Be conservative and predictable' : creativityLevel < 1.0 ? 'Balance realism with some variation' : 'Be creative while maintaining appropriateness'}
 - Return ONLY the content for the field, no explanations or quotes
-- Keep it concise and relevant to the context
+- Keep it concise and relevant to the context${previousGenerations && previousGenerations.length > 0 ? `
+
+IMPORTANT: The following content has already been generated for this field. Please generate something DIFFERENT and UNIQUE:
+${previousGenerations.map((gen, i) => `${i + 1}. "${gen}"`).join('\n')}
+
+Do NOT repeat any of the above. Generate a completely different variation.` : ''}
 
 Content:`;
 
@@ -115,6 +140,25 @@ Content:`;
 
   async generateResponse(request: LLMRequest): Promise<LLMResponse> {
     try {
+      // Log the prompt before sending to LLM
+      const prompt = this.buildPrompt(
+        request.fieldInfo,
+        request.creativityLevel,
+        request.context,
+        request.pageContext,
+        request.previousGenerations
+      );
+      
+      console.log('=== LLM PROMPT ===');
+      console.log(`Provider: ${this.getName()}`);
+      console.log(`Model: ${this.model}`);
+      console.log(`Field Type: ${request.fieldInfo.type}`);
+      console.log(`Field Label: ${request.fieldInfo.label}`);
+      console.log(`Creativity Level: ${request.creativityLevel}`);
+      console.log('Full Prompt:');
+      console.log(prompt);
+      console.log('=== END PROMPT ===');
+      
       const content = await this.generateContent(request);
       
       return {

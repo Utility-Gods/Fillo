@@ -44,7 +44,7 @@ export class AnthropicProvider extends BaseLLMProvider {
   }
 
   async generateContent(request: LLMRequest): Promise<string> {
-    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context, request.pageContext);
+    const prompt = this.buildPrompt(request.fieldInfo, request.creativityLevel, request.context, request.pageContext, request.previousGenerations);
     
     const response = await this.makeRequest(`${this.baseUrl}/messages`, {
       method: 'POST',

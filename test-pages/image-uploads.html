@@ -109,6 +109,9 @@
       max-height: 200px;
       border-radius: 4px;
     }
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -153,7 +156,60 @@
       </div>
     </div>
 
-    <!-- Test Case 3: Multiple image types -->
+    <!-- Test Case 3: Hidden File Input with CSS Class -->
+    <div class="form-section">
+      <h2>Test Case 3: Hidden File Input (CSS Class)</h2>
+      <p>This test case simulates your exact scenario with a hidden file input using class="hidden".</p>
+      <div class="form-group">
+        <label for="hiddenImageInput">Product Cover Image</label>
+        <div style="border: 2px dashed #ddd; padding: 40px; text-align: center; border-radius: 8px; background: #fafafa; cursor: pointer; position: relative;" onclick="document.getElementById('hiddenImageInput').click()">
+          <div style="margin-bottom: 10px;">📤</div>
+          <div style="font-weight: 500; margin-bottom: 5px;">Upload a cover image</div>
+          <div style="font-size: 12px; color: #666;">PNG, JPG, GIF up to 10MB</div>
+          <input class="hidden" id="hiddenImageInput" name="productImage" type="file" accept="image/*" onchange="handleImageSelect(event)">
+        </div>
+        <div class="preview-area" id="preview3">
+          <span>No image selected</span>
+        </div>
+        <div class="code-snippet">
+          &lt;input class="hidden" id="hiddenImageInput" name="productImage" type="file" accept="image/*" onchange="handleImageSelect(event)"&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Case 4: Label/Input Separated Pattern (Your Exact Case) -->
+    <div class="form-section">
+      <h2>Test Case 4: Separated Label and Hidden Input (Your Case)</h2>
+      <p>This matches your exact HTML structure with label[for="inputId"] and separate hidden input.</p>
+      <div class="form-group">
+        <div>
+          <label for="separatedInput" class="cursor-pointer w-full" style="display: block; width: 100%;">
+            <div style="margin-top: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; border: 2px dashed #d1d5db; border-radius: 6px; background: #fafafa; cursor: pointer; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#ef4444'" onmouseout="this.style.borderColor='#d1d5db'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                <path d="M7 9l5 -5l5 5"></path>
+                <path d="M12 4l0 12"></path>
+              </svg>
+              <div style="display: flex; font-size: 14px; color: #4b5563;">
+                <span>Upload a cover image</span>
+              </div>
+              <p style="font-size: 12px; color: #6b7280; margin: 4px 0 0 0;">PNG, JPG, GIF up to 10MB</p>
+            </div>
+          </label>
+          <input class="hidden" id="separatedInput" name="productImage" type="file" accept="image/*" onchange="handleImageSelect(event)">
+        </div>
+        <div class="preview-area" id="preview4">
+          <span>No image selected</span>
+        </div>
+        <div class="code-snippet">
+          &lt;label for="separatedInput" class="cursor-pointer w-full"&gt;...&lt;/label&gt;<br>
+          &lt;input class="hidden" id="separatedInput" name="productImage" type="file" accept="image/*"&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Case 5: Multiple image types -->
     <div class="form-section">
       <h2>Test Case 3: Specific Image Types</h2>
       <div class="form-group">

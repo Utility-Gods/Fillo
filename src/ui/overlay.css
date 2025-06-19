@@ -1,18 +1,21 @@
 .fillo-field-button {
-  position: absolute;
+  position: fixed !important;
   width: 28px;
   height: 28px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   background: white;
   cursor: pointer;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 999;
+  z-index: 999999 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .fillo-field-button:hover {
@@ -43,7 +46,7 @@
 }
 
 .fillo-suggestion-panel {
-  position: absolute;
+  position: fixed;
   width: 320px;
   max-width: 90vw;
   background: white;
@@ -54,6 +57,9 @@
   opacity: 0;
   transform: translateY(-10px);
   animation: fillo-slide-in 0.2s ease forwards;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
 }
 
 @keyframes fillo-slide-in {
@@ -69,6 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .fillo-panel-title {
@@ -97,8 +104,14 @@
 
 .fillo-panel-content {
   padding: 16px;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
+}
+
+.fillo-image-panel .fillo-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .fillo-suggestion {
@@ -167,13 +180,43 @@
   color: #999;
 }
 
-.fillo-suggestion.cached::after {
-  content: '💾';
+.fillo-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fillo-source-badge.llm {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.fillo-source-badge.cache {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.fillo-suggestion.cached {
+  background: #f8f9fa;
+  position: relative;
+}
+
+.fillo-suggestion.cached::before {
+  content: '💾 CACHED';
   position: absolute;
   top: 8px;
   right: 8px;
-  font-size: 12px;
-  opacity: 0.5;
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  background: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .fillo-regenerate-section {
@@ -343,9 +386,13 @@ select ~ .fillo-field-button {
   }
 }
 
-/* Image generation panel - make wider for better image preview */
+/* Image generation panel - make wider and taller for better image preview */
 .fillo-suggestion-panel.fillo-image-panel {
-  width: 420px;
+  width: 480px;
+  height: auto;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Image generation specific styles */
@@ -390,7 +437,8 @@ select ~ .fillo-field-button {
 
 .fillo-image-preview-area {
   margin-top: 20px;
-  min-height: 250px;
+  min-height: 300px;
+  max-height: 400px;
   border: 2px dashed #e0e0e0;
   border-radius: 8px;
   display: flex;
@@ -400,6 +448,7 @@ select ~ .fillo-field-button {
   padding: 20px;
   text-align: center;
   background: #fafafa;
+  overflow-y: auto;
 }
 
 .fillo-image-placeholder {
@@ -410,20 +459,35 @@ select ~ .fillo-field-button {
 
 .fillo-generated-image {
   max-width: 100%;
-  max-height: 350px;
+  max-height: 300px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
 }
 
-.fillo-image-actions {
+.fillo-panel-actions {
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  background: #fafafa;
+  position: sticky;
+  bottom: 0;
+  margin: 0 -16px -16px -16px;
+}
+
+.fillo-image-preview-area .fillo-image-actions {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 0;
   justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .fillo-generate-image-button {
-  width: 100%;
   padding: 12px 20px;
   border: 1px solid #007bff;
   background: #007bff;
@@ -437,7 +501,6 @@ select ~ .fillo-field-button {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 16px;
 }
 
 .fillo-use-image-button,

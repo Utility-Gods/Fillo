@@ -104,7 +104,7 @@ export class ProviderManager {
     return null;
   }
 
-  async generateContent(fieldInfo: FieldInfo, context?: string, pageContext?: PageContext): Promise<LLMResponse | null> {
+  async generateContent(fieldInfo: FieldInfo, context?: string, pageContext?: PageContext, previousGenerations?: string[]): Promise<LLMResponse | null> {
     const provider = await this.getCurrentProvider();
     if (!provider) {
       throw new Error('No LLM provider configured. Please add an API key in settings.');
@@ -124,7 +124,8 @@ export class ProviderManager {
       fieldInfo,
       creativityLevel,
       context,
-      pageContext
+      pageContext,
+      previousGenerations
     };
 
     try {

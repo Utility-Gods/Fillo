@@ -1,5 +1,6 @@
 import { FieldInfo, ProviderResponse } from '../types';
 import { ContextExtractor } from '../utils/context-extractor';
+import { FormStateManager } from '../utils/form-state-manager';
 
 export interface OverlayOptions {
   showIcons: boolean;
@@ -37,7 +38,6 @@ export class OverlayManager {
       
       // If we have any encrypted API keys, we have a provider configured
       this.hasProvider = Object.keys(encryptedKeys).length > 0;
-      console.log('OverlayManager: Found encrypted keys for providers:', Object.keys(encryptedKeys));
     } catch (error) {
       console.error('OverlayManager: Failed to check encrypted keys:', error);
       this.hasProvider = false;
@@ -66,7 +66,6 @@ export class OverlayManager {
     style.id = 'fillo-overlay-styles';
     
     // Import the CSS content
-    console.log('Fillo: Loading overlay styles from:', chrome.runtime.getURL('src/ui/overlay.css'));
     
     fetch(chrome.runtime.getURL('src/ui/overlay.css'))
       .then(response => {
@@ -78,7 +77,6 @@ export class OverlayManager {
       .then(css => {
         style.textContent = css;
         document.head.appendChild(style);
-        console.log('Fillo: Overlay styles injected successfully');
       })
       .catch(error => {
         console.error('Fillo: Failed to load overlay styles:', error);
@@ -90,16 +88,8 @@ export class OverlayManager {
   attachToField(element: HTMLElement, fieldInfo: FieldInfo): void {
     // Don't attach if already attached
     if (this.activeFields.has(element)) {
-      console.log('Fillo: Field already has button attached');
       return;
     }
-
-    console.log('Fillo: Attaching button to field:', {
-      type: fieldInfo.type,
-      label: fieldInfo.label,
-      element: element.tagName,
-      inputType: (element as HTMLInputElement).type
-    });
 
     this.activeFields.set(element, fieldInfo);
     
@@ -186,48 +176,139 @@ export class OverlayManager {
     }
 
     let rect = element.getBoundingClientRect();
+    let targetElement = element;
     const buttonSize = 28;
     const margin = 8;
 
-    // For file inputs with opacity 0, try to find a visible parent container
+    // For file inputs, handle common hidden/invisible patterns
     if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'file') {
       const style = window.getComputedStyle(element);
-      if (style.opacity === '0' || parseFloat(style.opacity) < 0.1) {
-        // Look for a visible parent container (label, div, etc.)
-        let container = element.parentElement;
-        while (container && container !== document.body) {
-          const containerStyle = window.getComputedStyle(container);
-          if (containerStyle.opacity !== '0' && parseFloat(containerStyle.opacity || '1') > 0.1) {
-            const containerRect = container.getBoundingClientRect();
-            if (containerRect.width > 0 && containerRect.height > 0) {
-              rect = containerRect;
-              console.log('Fillo: Using container rect for file input:', container);
-              break;
+      const hasHiddenClass = element.classList.contains('hidden');
+      const isHidden = style.display === 'none' || 
+                       style.visibility === 'hidden' || 
+                       style.opacity === '0' || 
+                       parseFloat(style.opacity) < 0.1 ||
+                       rect.width === 0 || 
+                       rect.height === 0 ||
+                       hasHiddenClass;
+
+      if (isHidden) {
+        // Strategy 1: Look for associated label elements (label[for="inputId"])
+        const labelElement = element.id ? document.querySelector(`label[for="${element.id}"]`) : null;
+        if (labelElement) {
+          const labelRect = labelElement.getBoundingClientRect();
+          if (labelRect.width > 0 && labelRect.height > 0) {
+            // Look for the actual upload area within the label
+            const uploadArea = labelElement.querySelector(
+              'div[class*="border-dashed"], div[class*="dashed"], div[class*="flex"], div[class*="items-center"], .upload-area'
+            );
+            if (uploadArea) {
+              const uploadRect = uploadArea.getBoundingClientRect();
+              if (uploadRect.width > 0 && uploadRect.height > 0) {
+                rect = uploadRect;
+                targetElement = uploadArea as HTMLElement;
+              } else {
+                rect = labelRect;
+                targetElement = labelElement as HTMLElement;
+              }
+            } else {
+              rect = labelRect;
+              targetElement = labelElement as HTMLElement;
             }
           }
-          container = container.parentElement;
+        }
+        
+        // If we didn't find a good label, try other strategies
+        if (targetElement === element) {
+          // Strategy 2: Look for a parent label wrapping the input
+          let parentLabel = element.closest('label');
+          if (parentLabel) {
+            const labelRect = parentLabel.getBoundingClientRect();
+            if (labelRect.width > 0 && labelRect.height > 0) {
+              rect = labelRect;
+              targetElement = parentLabel as HTMLElement;
+            }
+          }
+        }
+        
+        // If still no good target, look for sibling or nearby containers
+        if (targetElement === element) {
+          // Strategy 3: Look for preceding sibling elements (common pattern)
+          let sibling = element.previousElementSibling;
+          while (sibling) {
+            const siblingStyle = window.getComputedStyle(sibling);
+            const siblingRect = sibling.getBoundingClientRect();
+            
+            if (siblingStyle.display !== 'none' && 
+                siblingStyle.visibility !== 'hidden' &&
+                (siblingStyle.opacity === '' || parseFloat(siblingStyle.opacity) > 0.1) &&
+                siblingRect.width > 50 && 
+                siblingRect.height > 30) {
+              rect = siblingRect;
+              targetElement = sibling as HTMLElement;
+              break;
+            }
+            sibling = sibling.previousElementSibling;
+          }
+        }
+        
+        // Strategy 4: Look for a visible parent container with reasonable size
+        if (targetElement === element) {
+          let container = element.parentElement;
+          while (container && container !== document.body) {
+            const containerStyle = window.getComputedStyle(container);
+            const containerRect = container.getBoundingClientRect();
+            
+            // Check if container is visible and has reasonable dimensions
+            if (containerStyle.display !== 'none' && 
+                containerStyle.visibility !== 'hidden' &&
+                (containerStyle.opacity === '' || parseFloat(containerStyle.opacity) > 0.1) &&
+                containerRect.width > 20 && 
+                containerRect.height > 20) {
+              rect = containerRect;
+              targetElement = container;
+              break;
+            }
+            container = container.parentElement;
+          }
         }
       }
     }
 
-    // Position absolutely relative to the viewport
-    button.style.position = 'absolute';
-    button.style.left = `${rect.right - buttonSize - margin + window.scrollX}px`;
+    // Ensure button is always visible by setting explicit styles
+    button.style.position = 'fixed';
+    button.style.display = 'flex';
+    button.style.visibility = 'visible';
+    button.style.opacity = '1';
+    button.style.zIndex = '999999';
     
-    if (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
-      button.style.top = `${rect.top + margin + window.scrollY}px`;
+    // Position relative to the target element with bounds checking
+    let left = rect.right - buttonSize - margin;
+    let top = rect.top + margin;
+    
+    // For upload areas and large containers, position at top-right corner
+    if (rect.width > 100 && rect.height > 40) {
+      // Position at top-right of the actual upload area
+      top = rect.top + margin;
+    } else if (targetElement.tagName === 'TEXTAREA' || targetElement.tagName === 'SELECT') {
+      top = rect.top + margin;
     } else {
-      button.style.top = `${rect.top + (rect.height - buttonSize) / 2 + window.scrollY}px`;
+      // Standard positioning for smaller elements - center vertically
+      top = rect.top + (rect.height - buttonSize) / 2;
     }
+    
+    // Ensure button stays within reasonable screen bounds
+    const minLeft = 50; // Don't go too far left
+    const maxLeft = window.innerWidth - buttonSize - 50; // Don't go too far right
+    const minTop = 50; // Don't go too far up
+    const maxTop = window.innerHeight - buttonSize - 50; // Don't go too far down
+    
+    left = Math.min(Math.max(left, minLeft), maxLeft);
+    top = Math.min(Math.max(top, minTop), maxTop);
+    
+    button.style.left = `${left}px`;
+    button.style.top = `${top}px`;
 
-    console.log('Fillo: Button positioned at:', {
-      left: button.style.left,
-      top: button.style.top,
-      elementRect: rect,
-      elementType: element.tagName,
-      inputType: (element as HTMLInputElement).type || 'N/A',
-      buttonVisible: button.offsetWidth > 0
-    });
   }
 
   private async showSuggestionPanel(element: HTMLElement, fieldInfo: FieldInfo): Promise<void> {
@@ -252,6 +333,21 @@ export class OverlayManager {
         try {
           // Extract page context for enhanced content generation
           const pageContext = ContextExtractor.extractPageContext(element);
+          
+          // Get current form state
+          const formStateManager = FormStateManager.getInstance();
+          const formState = formStateManager.getFormState(element);
+          
+          // Include form state in context
+          if (formState && pageContext.formFields) {
+            // Merge with current form state
+            formState.fields.forEach((value, key) => {
+              const existingField = pageContext.formFields!.find(f => f.name === key || f.id === key);
+              if (existingField) {
+                existingField.value = value.value;
+              }
+            });
+          }
           
           // Generate content through background script
           const response = await this.sendMessage({
@@ -397,17 +493,17 @@ export class OverlayManager {
               <option value="low">Low</option>
             </select>
           </div>
-          <div class="fillo-image-preview-area" id="image-preview">
-            <div class="fillo-image-placeholder">
-              Click "Generate Image" to create an AI image
-            </div>
+        </div>
+        <div class="fillo-image-preview-area" id="image-preview">
+          <div class="fillo-image-placeholder">
+            Click "Generate Image" to create an AI image
           </div>
         </div>
       </div>
     `;
 
     const actions = `
-      <div class="fillo-image-actions">
+      <div class="fillo-panel-actions">
         <button class="fillo-generate-image-button" data-action="generate-image">
           🎨 Generate Image
         </button>
@@ -428,11 +524,16 @@ export class OverlayManager {
     const suggestionItems = suggestions.map((suggestion, index) => {
       const creativityClass = this.getCreativityClass(suggestion.creativityLevel);
       const creativityLabel = this.getTemperatureLabel(suggestion.creativityLevel);
+      const sourceLabel = suggestion.cached ? 'CACHE' : 'AI';
+      const sourceClass = suggestion.cached ? 'cache' : 'llm';
       
       return `
         <div class="fillo-suggestion ${suggestion.cached ? 'cached' : ''}" data-index="${index}">
           <div class="fillo-suggestion-text">${this.escapeHtml(suggestion.content)}</div>
           <div class="fillo-suggestion-meta">
+            <span class="fillo-source-badge ${sourceClass}">
+              ${sourceLabel}
+            </span>
             <span class="fillo-creativity-badge ${creativityClass}">
               ${creativityLabel}
             </span>
@@ -451,10 +552,10 @@ export class OverlayManager {
     const regenerate = `
       <div class="fillo-regenerate-section">
         <button class="fillo-regenerate-button" data-action="regenerate">
-          🔄 Generate New
+          🔄 Generate New (No Cache)
         </button>
         <button class="fillo-regenerate-button secondary" data-action="regenerate-multiple">
-          ✨ Generate Multiple
+          ✨ Generate Multiple (Fresh)
         </button>
       </div>
     `;
@@ -540,6 +641,20 @@ export class OverlayManager {
       if (multiple) {
         // Generate multiple suggestions with varying creativity
         for (let i = 0; i < 3; i++) {
+          // Get current form state for each generation
+          const formStateManager = FormStateManager.getInstance();
+          const formState = formStateManager.getFormState(element);
+          
+          // Update page context with current form state
+          if (formState && pageContext.formFields) {
+            formState.fields.forEach((value, key) => {
+              const existingField = pageContext.formFields!.find(f => f.name === key || f.id === key);
+              if (existingField) {
+                existingField.value = value.value;
+              }
+            });
+          }
+          
           const response = await this.sendMessage({
             action: 'generateContent',
             fieldInfo: {
@@ -562,6 +677,19 @@ export class OverlayManager {
         }
       } else {
         // Generate single new suggestion
+        const formStateManager = FormStateManager.getInstance();
+        const formState = formStateManager.getFormState(element);
+        
+        // Update page context with current form state
+        if (formState && pageContext.formFields) {
+          formState.fields.forEach((value, key) => {
+            const existingField = pageContext.formFields!.find(f => f.name === key || f.id === key);
+            if (existingField) {
+              existingField.value = value.value;
+            }
+          });
+        }
+        
         const response = await this.sendMessage({
           action: 'generateContent',
           fieldInfo: {
@@ -613,6 +741,23 @@ export class OverlayManager {
     previewArea.innerHTML = '<div class="fillo-loading-spinner"></div><div>Generating image...</div>';
 
     try {
+      // Extract comprehensive page context
+      const pageContext = ContextExtractor.extractPageContext(element);
+      
+      // Get current form state to understand context better
+      const formStateManager = FormStateManager.getInstance();
+      const formState = formStateManager.getFormState(element);
+      
+      // Include form state in context for better image generation
+      if (formState && pageContext.formFields) {
+        formState.fields.forEach((value, key) => {
+          const existingField = pageContext.formFields!.find(f => f.name === key || f.id === key);
+          if (existingField) {
+            existingField.value = value.value;
+          }
+        });
+      }
+      
       // Send message to background script to generate image
       const response = await this.sendMessage({
         action: 'generateImage',
@@ -624,7 +769,8 @@ export class OverlayManager {
         },
         options: {
           size,
-          quality
+          quality,
+          pageContext
         }
       });
 
@@ -701,6 +847,10 @@ export class OverlayManager {
     if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
       element.value = value;
       
+      // Update form state
+      const formStateManager = FormStateManager.getInstance();
+      formStateManager.updateFieldValue(element, value);
+      
       // Trigger input event for React and other frameworks
       const inputEvent = new Event('input', { bubbles: true });
       element.dispatchEvent(inputEvent);
@@ -718,6 +868,11 @@ export class OverlayManager {
       
       if (matchingOption) {
         element.value = matchingOption.value;
+        
+        // Update form state
+        const formStateManager = FormStateManager.getInstance();
+        formStateManager.updateFieldValue(element, matchingOption.value);
+        
         const changeEvent = new Event('change', { bubbles: true });
         element.dispatchEvent(changeEvent);
       }

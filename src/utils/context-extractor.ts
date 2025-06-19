@@ -7,6 +7,17 @@ export interface PageContext {
   parentElements: string[];
   nearbyText: string;
   formPurpose?: string;
+  formHTML?: string;
+  allMetaTags?: Record<string, string>;
+  formFields?: FormFieldState[];
+}
+
+export interface FormFieldState {
+  name: string;
+  id: string;
+  type: string;
+  value: string;
+  label?: string;
 }
 
 export class ContextExtractor {
@@ -19,6 +30,9 @@ export class ContextExtractor {
       nearbyText: ''
     };
 
+    // Extract all meta tags
+    context.allMetaTags = this.extractAllMetaTags();
+    
     // Extract meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
@@ -36,6 +50,12 @@ export class ContextExtractor {
 
     // Extract nearby text content
     context.nearbyText = this.getNearbyText(element);
+
+    // Extract form HTML structure (limited to avoid too much data)
+    context.formHTML = this.getFormHTML(element);
+    
+    // Extract current form fields state
+    context.formFields = this.getFormFieldsState(element);
 
     // Try to determine form purpose from context
     context.formPurpose = this.inferFormPurpose(element, context);
@@ -233,5 +253,97 @@ export class ContextExtractor {
     
     const normalizedId = id.toLowerCase();
     return meaningfulPatterns.some(pattern => normalizedId.includes(pattern));
+  }
+  
+  private static extractAllMetaTags(): Record<string, string> {
+    const metaTags: Record<string, string> = {};
+    const metas = document.querySelectorAll('meta');
+    
+    metas.forEach(meta => {
+      const name = meta.getAttribute('name') || meta.getAttribute('property');
+      const content = meta.getAttribute('content');
+      
+      if (name && content) {
+        metaTags[name] = content;
+      }
+    });
+    
+    return metaTags;
+  }
+  
+  private static getFormHTML(element: HTMLElement): string {
+    const form = element.closest('form');
+    if (!form) return '';
+    
+    // Create a clone to avoid modifying the original
+    const formClone = form.cloneNode(true) as HTMLElement;
+    
+    // Remove script tags and sensitive data attributes
+    formClone.querySelectorAll('script').forEach(script => script.remove());
+    formClone.querySelectorAll('[data-password], [data-secret]').forEach(el => {
+      el.removeAttribute('data-password');
+      el.removeAttribute('data-secret');
+    });
+    
+    // Remove actual values from password inputs
+    formClone.querySelectorAll('input[type="password"]').forEach(input => {
+      (input as HTMLInputElement).value = '';
+    });
+    
+    // Limit the HTML to prevent sending too much data
+    let html = formClone.outerHTML;
+    if (html.length > 5000) {
+      // If too long, just get the structure without deep nesting
+      html = this.getFormStructure(form);
+    }
+    
+    return html;
+  }
+  
+  private static getFormStructure(form: HTMLElement): string {
+    // Get a simplified structure of the form
+    const structure: string[] = [];
+    structure.push(`<form name="${form.getAttribute('name') || ''}" id="${form.getAttribute('id') || ''}" action="${form.getAttribute('action') || ''}" method="${form.getAttribute('method') || ''}" class="${form.className}">`);
+    
+    // Get all form fields with their labels
+    const fields = form.querySelectorAll('input, textarea, select');
+    fields.forEach((field: Element) => {
+      const input = field as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      const label = this.getAssociatedLabel(input as HTMLElement);
+      structure.push(`  <!-- Field: ${label || input.name || input.id || 'unnamed'} -->`);
+      structure.push(`  <${field.tagName.toLowerCase()} type="${(field as HTMLInputElement).type || ''}" name="${input.name}" id="${input.id}" placeholder="${(input as HTMLInputElement).placeholder || ''}" />`);
+    });
+    
+    structure.push('</form>');
+    return structure.join('\n');
+  }
+  
+  private static getFormFieldsState(element: HTMLElement): FormFieldState[] {
+    const form = element.closest('form');
+    if (!form) return [];
+    
+    const fields: FormFieldState[] = [];
+    const formElements = form.querySelectorAll('input, textarea, select');
+    
+    formElements.forEach((field: Element) => {
+      const input = field as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      
+      // Skip the current field and password fields
+      if (input === element || (input as HTMLInputElement).type === 'password') {
+        return;
+      }
+      
+      const fieldState: FormFieldState = {
+        name: input.name || '',
+        id: input.id || '',
+        type: (input as HTMLInputElement).type || input.tagName.toLowerCase(),
+        value: input.value || '',
+        label: this.getAssociatedLabel(input as HTMLElement) || undefined
+      };
+      
+      fields.push(fieldState);
+    });
+    
+    return fields;
   }
 }

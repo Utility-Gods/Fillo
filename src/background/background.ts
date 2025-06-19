@@ -30,6 +30,7 @@ import { StorageManager } from '../storage/storage';
 import { ProviderManager } from '../llm/provider-manager';
 import { ContentGenerator } from '../llm/content-generator';
 import { OpenAIImageGenerator } from '../llm/providers/openai-image';
+import { ImageGenerationHistory } from '../utils/image-generation-history';
 
 // Initialize on install
 chrome.runtime.onInstalled.addListener(() => {
@@ -210,6 +211,7 @@ async function handleGetCacheStats(sendResponse: Function) {
 async function handleGenerateImage(request: any, sendResponse: Function) {
   try {
     console.log('Background: Starting image generation for field:', request.fieldInfo);
+    console.log('Background: Page context:', request.options?.pageContext);
     
     // Get the current provider settings
     const storage = StorageManager.getInstance();
@@ -224,8 +226,21 @@ async function handleGenerateImage(request: any, sendResponse: Function) {
     // Use the statically imported OpenAI image generator
     const imageGenerator = new OpenAIImageGenerator(openaiKey);
     
-    // Build prompt based on field info
-    const prompt = imageGenerator['buildPrompt'](request.fieldInfo, settings.creativityLevel);
+    // Get image generation history
+    const imageHistory = ImageGenerationHistory.getInstance();
+    const previousPrompts = imageHistory.getRecentPrompts(request.fieldInfo.signature);
+    
+    // Enhance field info with page context
+    const enhancedFieldInfo = {
+      ...request.fieldInfo,
+      pageContext: request.options?.pageContext
+    };
+    
+    // Build prompt based on enhanced field info with previous prompts
+    const prompt = imageGenerator['buildPrompt'](enhancedFieldInfo, settings.creativityLevel, previousPrompts);
+    
+    console.log('Background: Enhanced field info for image generation:', JSON.stringify(enhancedFieldInfo, null, 2));
+    console.log('Background: Previous image prompts:', previousPrompts);
     
     // Generate the image
     const imageResponse = await imageGenerator.generateImage({
@@ -236,6 +251,15 @@ async function handleGenerateImage(request: any, sendResponse: Function) {
     });
     
     console.log('Background: Image generated successfully:', imageResponse);
+    
+    // Add to image generation history
+    imageHistory.addEntry(
+      request.fieldInfo.signature,
+      prompt,
+      imageResponse.url,
+      imageResponse.size || '1024x1024'
+    );
+    
     sendResponse({ 
       success: true, 
       imageUrl: imageResponse.url,

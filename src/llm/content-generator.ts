@@ -3,16 +3,19 @@ import { CacheManager } from '../database/cache';
 import { ProviderManager } from './provider-manager';
 import { StorageManager } from '../storage/storage';
 import { ContextExtractor, PageContext } from '../utils/context-extractor';
+import { GenerationHistory } from '../utils/generation-history';
 
 export class ContentGenerator {
   private static instance: ContentGenerator;
   private cacheManager: CacheManager;
   private providerManager: ProviderManager;
+  private generationHistory: GenerationHistory;
   private initialized = false;
 
   private constructor() {
     this.cacheManager = CacheManager.getInstance();
     this.providerManager = ProviderManager.getInstance();
+    this.generationHistory = GenerationHistory.getInstance();
   }
 
   static getInstance(): ContentGenerator {
@@ -49,6 +52,14 @@ export class ContentGenerator {
         
         if (cached) {
           console.log('Cache hit for field:', fieldInfo.signature);
+          
+          // Still add cached content to history so we can avoid regenerating it
+          this.generationHistory.addEntry(
+            fieldInfo.signature, 
+            cached.generatedContent, 
+            cached.provider || 'unknown'
+          );
+          
           return {
             content: cached.generatedContent,
             cached: true,
@@ -62,9 +73,13 @@ export class ContentGenerator {
 
     // Generate new content
     console.log('Generating new content for field:', fieldInfo.signature);
+    console.log('Content Generator: Page context provided:', JSON.stringify(pageContext, null, 2));
     
     try {
-      const response = await this.providerManager.generateContent(fieldInfo, context, pageContext);
+      // Get previous generations for this field
+      const previousGenerations = this.generationHistory.getRecentContents(fieldInfo.signature);
+      
+      const response = await this.providerManager.generateContent(fieldInfo, context, pageContext, previousGenerations);
       
       if (!response) {
         throw new Error('No response from provider');
@@ -84,6 +99,9 @@ export class ContentGenerator {
         );
       }
 
+      // Add to generation history
+      this.generationHistory.addEntry(fieldInfo.signature, response.content, response.provider);
+      
       return {
         content: response.content,
         cached: false,
