@@ -126,112 +126,150 @@ export class OpenAIImageGenerator extends BaseImageGenerator {
     const context = fieldInfo.context || '';
     const pageContext = fieldInfo.pageContext;
     
-    let basePrompt = 'Generate a professional, high-quality image without any text or words';
-    let contextType = '';
-    let visualStyle = '';
+    // Build comprehensive context
+    let contextInfo = '\nCONTEXT FOR IMAGE GENERATION:\n';
     
-    // Extract relevant context from page to determine image type, not content
     if (pageContext) {
-      // Determine the general purpose without using specific text
-      if (pageContext.formPurpose) {
-        switch (pageContext.formPurpose) {
-          case 'registration':
-          case 'login':
-            contextType = 'suitable for user authentication';
-            break;
-          case 'contact':
-            contextType = 'suitable for business communication';
-            break;
-          case 'checkout':
-          case 'purchase':
-            contextType = 'suitable for e-commerce';
-            break;
-          case 'profile':
-            contextType = 'suitable for user profiles';
-            break;
-          default:
-            contextType = `suitable for ${pageContext.formPurpose}`;
-        }
+      contextInfo += `- Page: ${pageContext.title}\n`;
+      contextInfo += `- URL: ${pageContext.url}\n`;
+      
+      if (pageContext.description) {
+        contextInfo += `- Description: ${pageContext.description}\n`;
       }
       
-      // Look at form fields to infer theme, not to add text
+      if (pageContext.formPurpose) {
+        contextInfo += `- Form Purpose: ${pageContext.formPurpose}\n`;
+      }
+      
+      // Include current form field values for better context
       if (pageContext.formFields && pageContext.formFields.length > 0) {
-        const hasProductFields = pageContext.formFields.some((f: any) => 
-          f.label?.toLowerCase().includes('product') || 
-          f.label?.toLowerCase().includes('catalog')
-        );
-        const hasUserFields = pageContext.formFields.some((f: any) => 
-          f.label?.toLowerCase().includes('name') || 
-          f.label?.toLowerCase().includes('email')
-        );
-        
-        if (hasProductFields) {
-          visualStyle = 'modern, clean, professional product imagery';
-        } else if (hasUserFields) {
-          visualStyle = 'friendly, professional, people-oriented';
+        const filledFields = pageContext.formFields
+          .filter((f: any) => f.value && f.label)
+          .slice(0, 5);
+          
+        if (filledFields.length > 0) {
+          contextInfo += `\nOther filled form fields (for context):\n`;
+          filledFields.forEach((field: any) => {
+            contextInfo += `- ${field.label}: ${field.value}\n`;
+          });
         }
       }
     }
     
-    // Determine the type of image based on field context and label
+    // Determine what type of image based on all context
+    let imageType = this.determineImageType(label, context, pageContext);
+    let specificRequirements = this.getSpecificRequirements(imageType, pageContext);
+    
+    const creativityDescription = this.getCreativityDescription(creativity);
+    
+    // Build the main prompt
+    let prompt = `You need to generate an image for a form field.
+
+Field Details:
+- Field Type: ${fieldInfo.type}
+- Field Label: ${label}
+- Form Context: ${context}
+${contextInfo}
+
+Based on this context, generate: ${imageType}
+${specificRequirements}
+
+Creativity Level: ${creativityDescription}
+
+IMPORTANT RULES:
+1. NO TEXT, WORDS, LETTERS, OR NUMBERS in the image
+2. Focus on visual elements only
+3. Image should be contextually appropriate for the form and page
+4. Professional quality suitable for web use
+5. Good contrast and clarity`;
+
+    // Add previous prompts if any to avoid repetition
+    if (previousPrompts && previousPrompts.length > 0) {
+      prompt += `\n\nPreviously generated (create something DIFFERENT):\n${previousPrompts.map((p, i) => `${i + 1}. ${p.substring(0, 100)}...`).join('\n')}`;
+    }
+    
+    return prompt;
+  }
+  
+  private determineImageType(label: string, context: string, pageContext: any): string {
     const labelLower = label.toLowerCase();
     const contextLower = context.toLowerCase();
     
+    // First check the specific field label
     if (labelLower.includes('profile') || labelLower.includes('avatar')) {
-      basePrompt = 'Generate a professional headshot or avatar photo, no text, just the person';
+      return 'a professional profile photo or avatar';
     } else if (labelLower.includes('logo')) {
-      basePrompt = 'Generate an abstract logo design with geometric shapes or symbols, no text or letters';
+      return 'a logo design (abstract shapes/symbols only, no text)';
     } else if (labelLower.includes('banner') || labelLower.includes('header')) {
-      basePrompt = 'Generate a visually appealing banner image with abstract patterns or nature scenes, no text';
+      return 'a banner/header image';
     } else if (labelLower.includes('cover') || labelLower.includes('hero')) {
-      basePrompt = 'Generate an inspiring cover image with beautiful scenery or abstract art, no text';
-    } else if (labelLower.includes('product') || labelLower.includes('catalog') || labelLower.includes('catalogue')) {
-      basePrompt = 'Generate a product photography style image showing elegant items or objects, no text';
+      // Check form fields for more specific context
+      if (pageContext?.formFields) {
+        const productName = pageContext.formFields.find((f: any) => 
+          f.label?.toLowerCase().includes('product') && f.value
+        );
+        if (productName) {
+          return `a cover image suitable for a ${productName.value} product`;
+        }
+      }
+      return 'a cover/hero image';
+    } else if (labelLower.includes('product')) {
+      return 'a product showcase image';
     } else if (labelLower.includes('thumbnail')) {
-      basePrompt = 'Generate a compelling thumbnail image with vibrant visuals, no text';
+      return 'a thumbnail image';
     } else if (labelLower.includes('background')) {
-      basePrompt = 'Generate a subtle background pattern or texture, no text';
-    } else if (contextType.includes('authentication')) {
-      basePrompt = 'Generate a secure, professional image with abstract security concepts, no text';
-    } else if (contextType.includes('e-commerce')) {
-      basePrompt = 'Generate a shopping or retail themed image with products or shopping concepts, no text';
-    } else if (contextType.includes('communication')) {
-      basePrompt = 'Generate a professional business communication themed image, no text';
-    }
-
-    // Add creativity modifiers
-    let styleModifier = '';
-    if (creativity < 0.3) {
-      styleModifier = ', simple and clean style, minimal design, subtle colors';
-    } else if (creativity < 0.7) {
-      styleModifier = ', professional and polished style, modern design';
-    } else if (creativity < 1.2) {
-      styleModifier = ', creative and artistic style, vibrant colors';
-    } else {
-      styleModifier = ', highly creative and experimental style, unique artistic approach, bold and dynamic';
-    }
-
-    // Build the final prompt
-    let finalPrompt = `${basePrompt}${styleModifier}`;
-    
-    // Add visual style if determined
-    if (visualStyle) {
-      finalPrompt += `. Visual style: ${visualStyle}`;
+      return 'a background pattern or texture';
     }
     
-    // Add context type if available
-    if (contextType) {
-      finalPrompt += `, ${contextType}`;
+    // Default based on form purpose
+    if (pageContext?.formPurpose) {
+      switch (pageContext.formPurpose) {
+        case 'registration':
+        case 'profile':
+          return 'a user/profile related image';
+        case 'checkout':
+        case 'purchase':
+          return 'an e-commerce/shopping related image';
+        default:
+          return 'a contextually appropriate image';
+      }
     }
     
-    // Make it appropriate for web use
-    finalPrompt += '. The image should be suitable for web use, with good contrast and clarity. IMPORTANT: Do not include any text, words, letters, or numbers in the image. Focus on visual elements only.';
+    return 'an appropriate image for this context';
+  }
+  
+  private getSpecificRequirements(imageType: string, pageContext: any): string {
+    let requirements = [];
     
-    // Add previous prompts if any to avoid repetition
-    if (previousPrompts && previousPrompts.length > 0) {
-      finalPrompt += `\n\nIMPORTANT: The following image descriptions have already been generated. Create something DIFFERENT:\n${previousPrompts.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nGenerate a completely different style and composition.`;
+    // Add specific requirements based on image type
+    if (imageType.includes('product')) {
+      requirements.push('Show products in an elegant, professional setting');
+      requirements.push('Use clean backgrounds and good lighting');
+    } else if (imageType.includes('profile') || imageType.includes('avatar')) {
+      requirements.push('Professional appearance');
+      requirements.push('Friendly and approachable');
+    } else if (imageType.includes('cover') || imageType.includes('hero')) {
+      requirements.push('Eye-catching and inspiring');
+      requirements.push('High visual impact');
     }
     
-    return finalPrompt;
+    // Add requirements based on form context
+    if (pageContext?.formFields) {
+      const hasProducts = pageContext.formFields.some((f: any) => 
+        f.label?.toLowerCase().includes('product') && f.value
+      );
+      if (hasProducts) {
+        requirements.push('Suitable for product marketing');
+      }
+    }
+    
+    return requirements.length > 0 ? `\nSpecific requirements:\n${requirements.map(r => `- ${r}`).join('\n')}` : '';
+  }
+  
+  private getCreativityDescription(level: number): string {
+    if (level <= 0.3) return 'Very Conservative - Simple, minimal, clean';
+    if (level <= 0.7) return 'Balanced - Professional and polished';
+    if (level <= 1.2) return 'Creative - Artistic and vibrant';
+    return 'Highly Creative - Experimental and bold';
   }
 }

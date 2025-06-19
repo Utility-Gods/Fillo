@@ -12,7 +12,7 @@
   font-size: 16px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 999999 !important;
+  z-index: 99998 !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -53,13 +53,14 @@
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
+  z-index: 999999;
   opacity: 0;
   transform: translateY(-10px);
   animation: fillo-slide-in 0.2s ease forwards;
   display: flex;
   flex-direction: column;
   max-height: 80vh;
+  overflow: hidden;
 }
 
 @keyframes fillo-slide-in {
@@ -110,8 +111,11 @@
 
 .fillo-image-panel .fillo-panel-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
   min-height: 0;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .fillo-suggestion {
@@ -346,6 +350,11 @@ select ~ .fillo-field-button {
     border-color: #444;
     color: white;
   }
+  
+  .fillo-panel-actions {
+    background: #2a2a2a;
+    border-color: #444;
+  }
 
   .fillo-field-button:hover {
     background: #1a1a1a;
@@ -390,9 +399,11 @@ select ~ .fillo-field-button {
 .fillo-suggestion-panel.fillo-image-panel {
   width: 480px;
   height: auto;
-  max-height: 90vh;
+  min-height: 500px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Image generation specific styles */
@@ -400,6 +411,7 @@ select ~ .fillo-field-button {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  flex-shrink: 0;
 }
 
 .fillo-image-option {
@@ -436,9 +448,9 @@ select ~ .fillo-field-button {
 }
 
 .fillo-image-preview-area {
-  margin-top: 20px;
-  min-height: 300px;
-  max-height: 400px;
+  margin: 20px 0;
+  min-height: 350px;
+  flex: 1;
   border: 2px dashed #e0e0e0;
   border-radius: 8px;
   display: flex;
@@ -448,7 +460,13 @@ select ~ .fillo-field-button {
   padding: 20px;
   text-align: center;
   background: #fafafa;
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+/* When image is loaded, adjust layout */
+.fillo-image-preview-area:has(.fillo-generated-image) {
+  justify-content: flex-start;
+  padding-top: 20px;
 }
 
 .fillo-image-placeholder {
@@ -459,37 +477,40 @@ select ~ .fillo-field-button {
 
 .fillo-generated-image {
   max-width: 100%;
-  max-height: 300px;
+  max-height: 250px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  object-fit: contain;
 }
 
 .fillo-panel-actions {
-  padding: 16px;
-  border-top: 1px solid #e0e0e0;
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
   display: flex;
   justify-content: center;
   gap: 12px;
   background: #fafafa;
-  position: sticky;
-  bottom: 0;
-  margin: 0 -16px -16px -16px;
+  flex-shrink: 0;
+  margin: 0;
+  margin-top: auto;
+  border-radius: 0 0 8px 8px;
 }
 
 .fillo-image-preview-area .fillo-image-actions {
   display: flex;
   gap: 12px;
-  margin-top: 0;
+  margin-top: 12px;
   justify-content: center;
   background: transparent;
   border: none;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .fillo-generate-image-button {
-  padding: 12px 20px;
-  border: 1px solid #007bff;
+  padding: 10px 24px;
+  border: none;
   background: #007bff;
   color: white;
   border-radius: 6px;
@@ -501,29 +522,52 @@ select ~ .fillo-field-button {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
-.fillo-use-image-button,
+.fillo-use-image-button {
+  padding: 10px 24px;
+  border: none;
+  background: #28a745;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
 .fillo-regenerate-image-button {
-  padding: 10px 16px;
+  padding: 10px 24px;
   border: 1px solid #007bff;
-  background: #007bff;
-  color: white;
+  background: white;
+  color: #007bff;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
 
-.fillo-generate-image-button:hover:not(:disabled),
-.fillo-use-image-button:hover {
+.fillo-generate-image-button:hover:not(:disabled) {
   background: #0056b3;
-  border-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.fillo-use-image-button:hover {
+  background: #218838;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  transform: translateY(-1px);
 }
 
 .fillo-regenerate-image-button {
@@ -536,8 +580,9 @@ select ~ .fillo-field-button {
 }
 
 .fillo-generate-image-button:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Dark mode for image generation */

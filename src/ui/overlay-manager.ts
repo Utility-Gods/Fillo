@@ -14,6 +14,9 @@ export class OverlayManager {
   private activePanels: Map<HTMLElement, HTMLElement> = new Map();
   private stylesInjected = false;
   private hasProvider = false;
+  private globalResizeObserver: ResizeObserver | null = null;
+  private windowResizeHandler: (() => void) | null = null;
+  private globalMutationObserver: MutationObserver | null = null;
 
   private constructor() {}
 
@@ -44,6 +47,7 @@ export class OverlayManager {
     }
     
     this.injectStyles();
+    this.setupGlobalObservers();
   }
 
   private sendMessage(message: any): Promise<any> {
@@ -280,7 +284,7 @@ export class OverlayManager {
     button.style.display = 'flex';
     button.style.visibility = 'visible';
     button.style.opacity = '1';
-    button.style.zIndex = '999999';
+    button.style.zIndex = '99998';
     
     // Position relative to the target element with bounds checking
     let left = rect.right - buttonSize - margin;
@@ -778,15 +782,20 @@ export class OverlayManager {
         // Show preview
         previewArea.innerHTML = `
           <img src="${response.imageUrl}" alt="Generated image" class="fillo-generated-image" />
-          <div class="fillo-image-actions">
+        `;
+        
+        // Update footer with action buttons
+        const panelActions = panel.querySelector('.fillo-panel-actions');
+        if (panelActions) {
+          panelActions.innerHTML = `
             <button class="fillo-use-image-button" data-action="use-image">
               ✅ Use This Image
             </button>
             <button class="fillo-regenerate-image-button" data-action="regenerate-image">
               🔄 Generate Another
             </button>
-          </div>
-        `;
+          `;
+        }
 
         // Store the image data for later use
         (previewArea as any)._imageData = {
@@ -794,20 +803,23 @@ export class OverlayManager {
           filename: response.filename || `generated-${Date.now()}.png`
         };
 
-        // Add event listeners for new buttons
-        const useImageBtn = previewArea.querySelector('[data-action="use-image"]');
-        if (useImageBtn) {
-          useImageBtn.addEventListener('click', async () => {
-            await this.fillImageField(element as HTMLInputElement, (previewArea as any)._imageData);
-            this.closePanel(element);
-          });
-        }
+        // Add event listeners for footer buttons
+        const panelActionsElement = panel.querySelector('.fillo-panel-actions');
+        if (panelActionsElement) {
+          const useImageBtn = panelActionsElement.querySelector('[data-action="use-image"]');
+          if (useImageBtn) {
+            useImageBtn.addEventListener('click', async () => {
+              await this.fillImageField(element as HTMLInputElement, (previewArea as any)._imageData);
+              this.closePanel(element);
+            });
+          }
 
-        const regenerateBtn = previewArea.querySelector('[data-action="regenerate-image"]');
-        if (regenerateBtn) {
-          regenerateBtn.addEventListener('click', async () => {
-            await this.generateImage(panel, element, fieldInfo);
-          });
+          const regenerateBtn = panelActionsElement.querySelector('[data-action="regenerate-image"]');
+          if (regenerateBtn) {
+            regenerateBtn.addEventListener('click', async () => {
+              await this.generateImage(panel, element, fieldInfo);
+            });
+          }
         }
       } else {
         throw new Error(response.error || 'Failed to generate image');
@@ -916,9 +928,96 @@ export class OverlayManager {
     return div.innerHTML;
   }
 
+  private setupGlobalObservers(): void {
+    // Debounce function for performance
+    const debounce = (func: Function, wait: number) => {
+      let timeout: NodeJS.Timeout;
+      return (...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    };
+
+    // Create a debounced repositioning function
+    const repositionAllButtons = debounce(() => {
+      this.activeButtons.forEach((button, element) => {
+        this.positionButton(element, button);
+      });
+      this.activePanels.forEach((panel, element) => {
+        this.positionPanel(element, panel);
+      });
+    }, 100);
+
+    // Setup ResizeObserver for document body to catch layout changes
+    if (typeof ResizeObserver !== 'undefined') {
+      this.globalResizeObserver = new ResizeObserver(repositionAllButtons);
+      this.globalResizeObserver.observe(document.body);
+    }
+
+    // Setup window resize handler
+    this.windowResizeHandler = repositionAllButtons;
+    window.addEventListener('resize', this.windowResizeHandler);
+
+    // Also listen for scroll events as they might affect fixed positioning
+    window.addEventListener('scroll', repositionAllButtons, { passive: true });
+
+    // Setup MutationObserver to detect style/class changes on tracked elements
+    this.globalMutationObserver = new MutationObserver(debounce((mutations: MutationRecord[]) => {
+      const elementsToReposition = new Set<HTMLElement>();
+      
+      mutations.forEach(mutation => {
+        // Check if the mutated element is one we're tracking
+        if (mutation.target instanceof HTMLElement && this.activeFields.has(mutation.target)) {
+          elementsToReposition.add(mutation.target);
+        }
+        
+        // Also check if any parent of our tracked elements was modified
+        this.activeFields.forEach((_, element) => {
+          if (mutation.target instanceof Node && element.contains(mutation.target) || mutation.target.contains(element)) {
+            elementsToReposition.add(element);
+          }
+        });
+      });
+
+      // Reposition buttons for affected elements
+      elementsToReposition.forEach(element => {
+        const button = this.activeButtons.get(element);
+        if (button) {
+          this.positionButton(element, button);
+        }
+      });
+    }, 50));
+
+    // Observe style and class changes
+    this.globalMutationObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+      subtree: true
+    });
+  }
+
+  private cleanupGlobalObservers(): void {
+    if (this.globalResizeObserver) {
+      this.globalResizeObserver.disconnect();
+      this.globalResizeObserver = null;
+    }
+
+    if (this.globalMutationObserver) {
+      this.globalMutationObserver.disconnect();
+      this.globalMutationObserver = null;
+    }
+
+    if (this.windowResizeHandler) {
+      window.removeEventListener('resize', this.windowResizeHandler);
+      window.removeEventListener('scroll', this.windowResizeHandler);
+      this.windowResizeHandler = null;
+    }
+  }
+
   detachAll(): void {
     this.activeFields.forEach((_, element) => {
       this.detachFromField(element);
     });
+    this.cleanupGlobalObservers();
   }
 }

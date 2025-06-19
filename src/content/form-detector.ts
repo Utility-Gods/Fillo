@@ -26,10 +26,19 @@ export class FormDetector {
     let shouldRedetect = false;
     
     for (const mutation of mutations) {
+      // Skip mutations on Fillo elements
+      if (mutation.target && this.isFilloElement(mutation.target as Element)) {
+        continue;
+      }
+
       if (mutation.type === 'childList') {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
+            // Skip if it's a Fillo element
+            if (this.isFilloElement(element)) {
+              continue;
+            }
             if (this.isFormField(element) || element.querySelector('input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="url"], input[type="tel"], input[type="number"], input[type="file"], input:not([type]), textarea, select')) {
               shouldRedetect = true;
               break;
@@ -50,6 +59,11 @@ export class FormDetector {
     this.fields = [];
 
     formFields.forEach(field => {
+      // Skip if it's a Fillo element
+      if (this.isFilloElement(field)) {
+        return;
+      }
+      
       if (this.isFormField(field) && this.isVisible(field)) {
         const fieldInfo = this.analyzeField(field as HTMLElement);
         if (fieldInfo) {
@@ -61,7 +75,62 @@ export class FormDetector {
     this.notifyFieldsChanged();
   }
 
+  private isFilloElement(element: Element): boolean {
+    // Check if element or any parent has Fillo-specific classes
+    const filloClasses = [
+      'fillo-suggestion-panel',
+      'fillo-field-button',
+      'fillo-panel-content',
+      'fillo-panel-header',
+      'fillo-panel-actions',
+      'fillo-loading-message',
+      'fillo-error-message',
+      'fillo-suggestion',
+      'fillo-regenerate-section',
+      'fillo-image-panel',
+      'fillo-image-options',
+      'fillo-image-preview-area',
+      'fillo-image-size',
+      'fillo-image-quality',
+      'fillo-no-provider',
+      'fillo-settings-link',
+      'fillo-regenerate-button',
+      'fillo-generate-image-button',
+      'fillo-use-image-button',
+      'fillo-panel-close'
+    ];
+
+    // Check current element
+    for (const className of filloClasses) {
+      if (element.classList.contains(className)) {
+        return true;
+      }
+    }
+
+    // Check if element is inside any Fillo container
+    for (const className of filloClasses) {
+      if (element.closest(`.${className}`)) {
+        return true;
+      }
+    }
+
+    // Additional check for data attributes used by Fillo
+    if (element.hasAttribute('data-action') || element.hasAttribute('data-setting')) {
+      const parent = element.closest('.fillo-suggestion-panel, .fillo-image-panel');
+      if (parent) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private isFormField(element: Element): boolean {
+    // Skip any elements that are part of the Fillo overlay UI
+    if (this.isFilloElement(element)) {
+      return false;
+    }
+
     if (element.tagName === 'TEXTAREA') return true;
     if (element.tagName === 'SELECT') return true;
     

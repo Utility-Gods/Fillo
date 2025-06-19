@@ -41,7 +41,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that generates realistic form field content. Always respond with just the requested content, no additional text or formatting.'
+            content: 'You are a helpful assistant that generates realistic form field content that users would actually type. Never include platform names, website names, or describe the website itself. Always respond with just the content a user would enter, no additional text or formatting.'
           },
           {
             role: 'user',
